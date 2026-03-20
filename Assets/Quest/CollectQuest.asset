@@ -21,7 +21,7 @@ MonoBehaviour:
     currentSellect: 0
     requiredSellect: 5
     type: 0
-  - objectiveID: 1
+  - objectiveID: 2
     description: Sellect 5 potion
     currentSellect: 0
     requiredSellect: 3

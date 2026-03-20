@@ -143,8 +143,11 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IEndDragHandler
         dropItem.GetComponent<BounceEffect>().StartBounce();
         //Destroy item in inventory
         if(quatity<=1 && originalSlot.CurrentItem == null)
-        Destroy(gameObject);
+        {
+            Destroy(gameObject);
+        }
 
+        InventoryController.Intance.RebuildItemCounts();
     }
 
     public void OnPointerClick(PointerEventData eventData)

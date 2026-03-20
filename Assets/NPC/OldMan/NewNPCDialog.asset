@@ -17,13 +17,13 @@ MonoBehaviour:
   dialogLines:
   - "Ch\xE0o ch\xE0ng trai tr\u1EBB"
   - Can you help?
-  - Ok..Do you like hot or cold
-  - You will Samac in West, sellect flower
-  - you will Snow in North, select pork meat
+  - Collect 5 health potion in village
   - Ok...
   - See you later
-  autoProgressLines: 01000000000000
-  EndProgressLines: 00000001010001
+  - Continue... good luck
+  - Thank you!
+  autoProgressLines: 01000000000100
+  EndProgressLines: 00000100010101
   autoProgressDisplay: 1.5
   typingSpeed: 0.05
   choices:
@@ -31,9 +31,8 @@ MonoBehaviour:
     choices:
     - Yes
     - No
-    nextDialogIndexes: 0200000005000000
-  - dialogIndex: 2
-    choices:
-    - Hot
-    - I like cold
-    nextDialogIndexes: 0300000004000000
+    nextDialogIndexes: 0200000003000000
+    giveQuest: 0100
+  questInprogressIndex: 5
+  questCompletedIndex: 6
+  quest: {fileID: 11400000, guid: 644f3c1ce79237a4d89b7e2cbadf9bed, type: 2}

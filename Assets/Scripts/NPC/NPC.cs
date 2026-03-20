@@ -43,9 +43,16 @@ public class NPC : MonoBehaviour,IInteractable
         {
             dialogIndex = 0;
         }
-
+        else if(currentQuestState == QuestState.InProgress)
+        {
+            dialogIndex = dialogData.questInprogressIndex;
+        }
+        else if(currentQuestState == QuestState.Completed)
+        {
+            dialogIndex = dialogData.questCompletedIndex;
+        }
         isDialogActive = true;
-        dialogIndex = 0;
+       
         //nameText.SetText(dialogData.npcName);
         //portraitImage.sprite = dialogData.npcPortrait;
         //npcDialogPanel.SetActive(true);
@@ -68,7 +75,7 @@ public class NPC : MonoBehaviour,IInteractable
         }
         else
         {
-            currentQuestState = QuestState.Completed;
+            currentQuestState = QuestState.Notstarted;
         }
     }
     void NextLine()
@@ -145,11 +152,17 @@ public class NPC : MonoBehaviour,IInteractable
         for (int i = 0; i < dialogChoice.choices.Length; i++)
         {
             int indexChoice = dialogChoice.nextDialogIndexes[i];
-            DialogController.instance.CreateButtonChoice(dialogChoice.choices[i], ()=>ChoiceOption(indexChoice));
+            bool giveQuest = dialogChoice.giveQuest[i];
+            DialogController.instance.CreateButtonChoice(dialogChoice.choices[i], ()=>ChoiceOption(indexChoice,giveQuest));
         }
     }
-    void ChoiceOption(int nextindex)
+    void ChoiceOption(int nextindex, bool giveQues)
     {
+        if(giveQues)
+        {
+            QuestController.instance.AcceptQuest(dialogData.quest);
+            currentQuestState = QuestState.InProgress;
+        }
         dialogIndex = nextindex;
         DialogController.instance.ClearCHoices();
         DisplayCurrentLine();

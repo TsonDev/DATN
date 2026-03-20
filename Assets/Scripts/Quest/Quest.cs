@@ -30,9 +30,9 @@ public class QuestObjective
     public int requiredSellect;
 
     public bool IsCompleted => currentSellect >= requiredSellect;
-    public QuesObjectType type;
+    public QuestObjectType type;
 }
-public enum QuesObjectType { CollectItem, DefeatEnemy, ReachLocation, TalkNpc, Custom }
+public enum QuestObjectType { CollectItem, DefeatEnemy, ReachLocation, TalkNpc, Custom }
 
 [System.Serializable]
 public class QuestProgress

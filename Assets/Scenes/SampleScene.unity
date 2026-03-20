@@ -61119,8 +61119,6 @@ MonoBehaviour:
   questContent: {fileID: 609241378}
   questEntryPrefab: {fileID: 1193135866961924771, guid: 07b7f51041268064b97fa5b962dc0468, type: 3}
   objectTitlePrefab: {fileID: 9208561126264142505, guid: 8203e4e112f1f30419954fbe1865a87b, type: 3}
-  testQuest: {fileID: 11400000, guid: 644f3c1ce79237a4d89b7e2cbadf9bed, type: 2}
-  testQuestAmount: 3
 --- !u!1 &1566144248
 GameObject:
   m_ObjectHideFlags: 0

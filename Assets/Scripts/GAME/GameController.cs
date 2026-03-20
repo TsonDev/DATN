@@ -39,6 +39,7 @@ public class GameController : MonoBehaviour
             InvetorySaveData = inventoryController.GetInventoryItems(),
             HotBarSaveData = hotBarController.GetBarItems(),
             chestsSaveData = GetChestsState(),
+            questProgressesData = QuestController.instance.activeQuests
 
         };
         File.WriteAllText(saveLocation, JsonUtility.ToJson(saveData));
@@ -82,6 +83,7 @@ public class GameController : MonoBehaviour
 
             //Load chests state
             LoadChestState(saveData.chestsSaveData);
+            QuestController.instance.LoadQuestProgress(saveData.questProgressesData);
 
         }
         else
@@ -93,7 +95,7 @@ public class GameController : MonoBehaviour
         }
     }
 
-    private void LoadChestState(List<ChestsSaveData> chestsState)
+    public void LoadChestState(List<ChestsSaveData> chestsState)
     {
         foreach(Chest chest in chests)
         {
@@ -105,4 +107,5 @@ public class GameController : MonoBehaviour
             }
         }
     }
+   
 }
