@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54c43fa1607e06a4daf65159d6873208, type: 3}
+  m_Name: CollectQuest
+  m_EditorClassIdentifier: 
+  questID: 52ec7c4f-6f82-41d5-a546-35ffd326afd4
+  questName: CollectItem
+  questDescription: We must collect 5 health to finish
+  objectives:
+  - objectiveID: 1
+    description: Sellect 5 health
+    currentSellect: 0
+    requiredSellect: 5
+    type: 0
+  - objectiveID: 1
+    description: Sellect 5 potion
+    currentSellect: 0
+    requiredSellect: 3
+    type: 0
