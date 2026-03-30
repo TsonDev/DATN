@@ -92,6 +92,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: ItemDefeatSnow Variant
       objectReference: {fileID: 0}
+    - target: {fileID: 5821254708653145614, guid: 2de16d5976e8e8f47979885885244def, type: 3}
+      propertyPath: ID
+      value: 4
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

@@ -193,4 +193,41 @@ public class InventoryController : MonoBehaviour
         }
         RebuildItemCounts();
     }
+    public void RemoveItemFromInventory(int itemID, int amount)
+    {
+        if (amount <= 0) return;
+        int remaining = amount;
+        Debug.Log($"RemoveItemFromInventory: request remove itemID {itemID} x{amount}");
+
+        foreach (Transform slotTransform in InventoryPanel.transform)
+        {
+            if (remaining <= 0) break;
+
+            Slot slot = slotTransform.GetComponent<Slot>();
+            if (slot == null || slot.CurrentItem == null) continue;
+
+            Item item = slot.CurrentItem.GetComponent<Item>();
+            if (item == null) continue;
+
+            if (item.ID != itemID) continue;
+
+            int removed = item.RemoveFromStack(Mathf.Min(remaining, item.quantity));
+            remaining -= removed;
+            Debug.Log($"RemoveItemFromInventory: removed {removed} from slot {slotTransform.GetSiblingIndex()}, left to remove {remaining}");
+
+            if (item.quantity == 0)
+            {
+                Destroy(slot.CurrentItem);
+                slot.CurrentItem = null;
+            }
+        }
+
+        if (remaining > 0)
+        {
+            Debug.LogWarning($"RemoveItemFromInventory: could not remove full amount for itemID {itemID}. still need {remaining}");
+        }
+
+        // refresh counts and notify listeners
+        RebuildItemCounts();
+    }
 }

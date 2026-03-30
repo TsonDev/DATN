@@ -10,10 +10,26 @@ public class Item : MonoBehaviour
     public int quantity = 1;
     public int maxStack = 99;
     public TMP_Text quantityText;
+    [Header("Shop item")]
+    public int buyPrice;
+    [Range(0f, 1f)]
+    public float sellPriceMultiplier = 0.5f;// sell with 50% price of the buy price
     private void Awake()
     {
         quantityText = GetComponentInChildren<TMP_Text>();
         UpdateQuantity();
+    }
+    public virtual void ShowPopUp()
+    {
+        Sprite itemIcon = GetComponent<SpriteRenderer>()?.sprite;
+        if(ItemPickupUIController.Instance != null)
+        {
+            ItemPickupUIController.Instance.ShowItemPickup(Name, itemIcon);
+        }
+    }
+    public int GetSellPrice()
+    {
+        return Mathf.RoundToInt(buyPrice * sellPriceMultiplier);
     }
     public void UpdateQuantity()
     {
@@ -39,7 +55,7 @@ public class Item : MonoBehaviour
     {
         GameObject clone = Instantiate(gameObject);
         Item cloneItem = clone.GetComponent<Item>();
-        cloneItem.quantity = quantity;
+        cloneItem.quantity = newQuatity;
         cloneItem.UpdateQuantity();
         return clone;
     }

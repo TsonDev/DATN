@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -11,6 +11,7 @@ public class SaveData
     public List< InvetorySaveData> HotBarSaveData;
     public List<ChestsSaveData> chestsSaveData;
     public List<QuestProgress> questProgressesData;
+    public List<string> HandleIDs;
 
 }
 [System.Serializable]
@@ -20,3 +21,9 @@ public class ChestsSaveData
     public bool isOpened;
 }
 
+// Wrapper để JsonUtility có thể serialize/deserialize top-level List<QuestProgress>
+[System.Serializable]
+public class QuestProgressSaveWrapper
+{
+    public List<QuestProgress> questProgresses;
+}

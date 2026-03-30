@@ -10,6 +10,7 @@ public class Quest : ScriptableObject
     public string questName;
     public string questDescription;
     public List<QuestObjective> objectives;
+    public List<QuestReward> questRewards;
 
     //Called when have Scripttable obj created
     private void OnEnable()
@@ -24,7 +25,7 @@ public class Quest : ScriptableObject
 [System.Serializable]
 public class QuestObjective
 {
-    public string objectiveID;//MATCH with itemID collect, enemyID kill
+    public int objectiveID;//MATCH with itemID collect, enemyID kill
     public string description;
     public int currentSellect;
     public int requiredSellect;
@@ -60,3 +61,11 @@ public class QuestProgress
 
     public string QuestID => quest.questID;
 }
+[System.Serializable]
+public class QuestReward
+{
+    public RewardType type;
+    public int rewardID;
+    public int amount =1;
+}
+public enum RewardType { Experience, Item, Both, Gold, Custom }

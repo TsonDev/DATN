@@ -24,6 +24,7 @@ public class PlayerItemsCollection : MonoBehaviour
                 SoundManager.Instance.PlaySound(soundEff);
                 if (Added)
                 {
+                    item.ShowPopUp();
                     Destroy(collision.gameObject);
                 } 
             }

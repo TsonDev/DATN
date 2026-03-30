@@ -15,7 +15,7 @@ MonoBehaviour:
   npcName: Old man
   npcPortrait: {fileID: 21300000, guid: f64a2a86360332f43a8ad9e9ba4f9aa9, type: 3}
   dialogLines:
-  - "Ch\xE0o ch\xE0ng trai tr\u1EBB"
+  - Hello new hero
   - Can you help?
   - Collect 5 health potion in village
   - Ok...

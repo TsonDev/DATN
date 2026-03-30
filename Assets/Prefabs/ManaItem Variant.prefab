@@ -82,11 +82,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 703772019295673291, guid: 2de16d5976e8e8f47979885885244def, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 1.6071796
       objectReference: {fileID: 0}
     - target: {fileID: 703772019295673291, guid: 2de16d5976e8e8f47979885885244def, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: 1.5762496
       objectReference: {fileID: 0}
     - target: {fileID: 703772019295673291, guid: 2de16d5976e8e8f47979885885244def, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -111,6 +111,10 @@ PrefabInstance:
     - target: {fileID: 5821254708653145614, guid: 2de16d5976e8e8f47979885885244def, type: 3}
       propertyPath: ID
       value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5821254708653145614, guid: 2de16d5976e8e8f47979885885244def, type: 3}
+      propertyPath: Name
+      value: Mana
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

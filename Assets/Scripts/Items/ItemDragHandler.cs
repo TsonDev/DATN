@@ -4,7 +4,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IEndDragHandler,IDragHandler, IPointerClickHandler
+public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDragHandler, IPointerClickHandler
 {
     Transform originalParent;
     CanvasGroup canvasGroup;
@@ -22,8 +22,11 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IEndDragHandler
     {
         originalParent = transform.parent;
         transform.SetParent(transform.root);
-        canvasGroup.blocksRaycasts = false;
-        canvasGroup.alpha = 0.6f;
+        if (canvasGroup != null)
+        {
+            canvasGroup.blocksRaycasts = false;
+            canvasGroup.alpha = 0.6f;
+        }
     }
 
     public void OnDrag(PointerEventData eventData)
@@ -33,8 +36,11 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IEndDragHandler
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        canvasGroup.blocksRaycasts = true;
-        canvasGroup.alpha = 1f;
+        if (canvasGroup != null)
+        {
+            canvasGroup.blocksRaycasts = true;
+            canvasGroup.alpha = 1f;
+        }
 
         Slot slotDrop = eventData.pointerEnter?.GetComponent<Slot>();
         if (slotDrop == null)
@@ -45,109 +51,272 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IEndDragHandler
                 slotDrop = item.GetComponentInParent<Slot>();
             }
         }
-        Slot originalSlot = originalParent.GetComponent<Slot>();
-        if (originalSlot != null)
-        {
-            originalSlot.CurrentItem = null;
-        }
-        if (slotDrop != null)
-        {
-            if (slotDrop.CurrentItem != null)
-            {
-                //drop item stack
-                Item dragerItem = GetComponent<Item>();
-                Item targetItem = slotDrop.CurrentItem.GetComponent<Item>();
-                if (targetItem.ID == dragerItem.ID)
-                {
-                    targetItem.AddtoStack(dragerItem.quantity);
-                    originalSlot.CurrentItem = null;
-                    Destroy(gameObject);
 
+        // origin slot (may be null if originalParent is not a player inventory Slot)
+        Slot originalSlot = originalParent != null ? originalParent.GetComponent<Slot>() : null;
+        // origin shop slot (if any)
+        ShopSlot originalShopSlot = originalParent != null ? originalParent.GetComponentInParent<ShopSlot>() : null;
+        bool originIsShop = originalShopSlot != null && originalShopSlot.isShopSlot;
+
+        // If origin is a shop slot -> always revert to original position (no transfer)
+        if (originIsShop)
+        {
+            RevertToOriginal();
+            return;
+        }
+
+        // detect if target is hotbar
+        var hotbarController = FindObjectOfType<HotBarController>();
+        bool isTargetHotbar = false;
+        if (hotbarController != null && slotDrop != null && hotbarController.HotBarPanel != null)
+        {
+            isTargetHotbar = slotDrop.transform.IsChildOf(hotbarController.HotBarPanel.transform);
+        }
+
+        // CASE: dropped onto a hotbar slot -> remove one from inventory and place to hotbar
+        if (isTargetHotbar && slotDrop != null)
+        {
+            Item srcItem = GetComponent<Item>();
+            if (srcItem == null)
+            {
+                RevertToOriginal();
+                return;
+            }
+
+            // If origin is player inventory (originalSlot != null) then transfer 1 unit to hotbar
+            if (originalSlot != null)
+            {
+                // If stack > 1: create small visual clone for hotbar and decrement original stack
+                if (srcItem.quantity > 1)
+                {
+                    GameObject clone = srcItem.CloneItem(1);
+                    clone.transform.SetParent(slotDrop.transform);
+                    clone.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+                    slotDrop.CurrentItem = clone;
+
+                    // remove one from original stack (updates UI via Item.RemoveFromStack)
+                    srcItem.RemoveFromStack(1);
+
+                    // if original stack became 0 (shouldn't if >1 branch), clean up, else revert UI back
+                    if (srcItem.quantity <= 0)
+                    {
+                        originalSlot.CurrentItem = null;
+                        Destroy(gameObject);
+                    }
+                    else
+                    {
+                        RevertToOriginal();
+                    }
+
+                    InventoryController.Intance?.RebuildItemCounts();
+                    return;
                 }
                 else
                 {
-                    //swap items
-                    slotDrop.CurrentItem.transform.SetParent(originalParent.transform);
-                    originalSlot.CurrentItem = slotDrop.CurrentItem;
-                    slotDrop.CurrentItem.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+                    // quantity == 1 -> move the actual item UI to hotbar (no clone)
+                    originalSlot.CurrentItem = null;
+                    transform.SetParent(slotDrop.transform);
+                    slotDrop.CurrentItem = gameObject;
+                    GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
 
+                    InventoryController.Intance?.RebuildItemCounts();
+                    return;
+                }
+            }
+            else
+            {
+                // origin is not player inventory (shouldn't happen here because shop was handled), revert
+                RevertToOriginal();
+                return;
+            }
+        }
+
+        // CASE: dropped onto a normal inventory slot
+        if (slotDrop != null)
+        {
+            Item dragerItem = GetComponent<Item>();
+            if (slotDrop.CurrentItem != null)
+            {
+                Item targetItem = slotDrop.CurrentItem.GetComponent<Item>();
+                if (dragerItem == null || targetItem == null)
+                {
+                    RevertToOriginal();
+                    return;
+                }
+
+                if (targetItem.ID == dragerItem.ID)
+                {
+                    targetItem.AddtoStack(dragerItem.quantity);
+                    if (originalSlot != null)
+                    {
+                        originalSlot.CurrentItem = null;
+                        Destroy(gameObject);
+                    }
+                    else
+                    {
+                        // origin was not player inventory - revert the UI back (safety)
+                        RevertToOriginal();
+                    }
+                }
+                else
+                {
+                    // swap only if origin is an inventory slot (originalSlot != null)
+                    if (originalSlot != null)
+                    {
+                        slotDrop.CurrentItem.transform.SetParent(originalParent.transform);
+                        originalSlot.CurrentItem = slotDrop.CurrentItem;
+                        slotDrop.CurrentItem.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+
+                        transform.SetParent(slotDrop.transform);
+                        slotDrop.CurrentItem = gameObject;
+                        GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+                    }
+                    else
+                    {
+                        RevertToOriginal();
+                        Debug.LogWarning("OnEndDrag: cannot swap because original is not player inventory. Reverting.");
+                    }
+                }
+            }
+            else
+            {
+                // target slot empty -> move item (only if origin is player inventory)
+                if (originalSlot != null)
+                {
+                    originalSlot.CurrentItem = null;
                     transform.SetParent(slotDrop.transform);
                     slotDrop.CurrentItem = gameObject;
                     GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
                 }
-                  
+                else
+                {
+                    RevertToOriginal();
+                }
             }
-            else
-            {
-                originalSlot.CurrentItem = null;
-                transform.SetParent(slotDrop.transform);
-                slotDrop.CurrentItem = gameObject;
-                GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
-            }
-            //Move item  drop 
-            //transform.SetParent(slotDrop.transform);
-            //slotDrop.CurrentItem = gameObject;
         }
         else
         {
-            //Nếu nó không nằm trong inventory
+            // Not dropped on any slot
             if (!isWithInInventory(eventData.position))
             {
                 DropItem(originalSlot);
             }
             else
-            {     // quay về ô ban đầu
-                transform.SetParent(originalParent);
-                GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+            {
+                // inside inventory UI area but not on a slot -> return to original parent
+                RevertToOriginal();
             }
-           
         }
+
         GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
-        
     }
+
+    void RevertToOriginal()
+    {
+        // return the UI element to its original parent and restore slot/shop references
+        if (originalParent == null)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        transform.SetParent(originalParent);
+        var rt = GetComponent<RectTransform>();
+        if (rt != null) rt.anchoredPosition = Vector2.zero;
+
+        // restore ShopSlot.currentItem if parent is in a ShopSlot
+        var shopSlot = originalParent.GetComponentInParent<ShopSlot>();
+        if (shopSlot != null)
+        {
+            shopSlot.currentItem = gameObject;
+            return;
+        }
+
+        // otherwise restore Slot.CurrentItem
+        var slot = originalParent.GetComponent<Slot>();
+        if (slot != null)
+        {
+            slot.CurrentItem = gameObject;
+        }
+    }
+
     bool isWithInInventory(Vector2 mousePosition)
     {
-        RectTransform rectTransform = originalParent.parent.GetComponent<RectTransform>(); 
+        if (originalParent == null || originalParent.parent == null) return false;
+        RectTransform rectTransform = originalParent.parent.GetComponent<RectTransform>();
+        if (rectTransform == null) return false;
         return RectTransformUtility.RectangleContainsScreenPoint(rectTransform, mousePosition);
     }
     void DropItem(Slot originalSlot)
     {
+        // Defensive: make sure we have an Item component
         Item item = GetComponent<Item>();
+        if (item == null)
+        {
+            Debug.LogWarning("DropItem: dragged object has no Item component — destroying.");
+            Destroy(gameObject);
+            return;
+        }
+
         int quatity = item.quantity;
+
         if (quatity > 1)
         {
             item.RemoveFromStack();
-            transform.SetParent(originalParent);
-            GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+            if (originalParent != null) transform.SetParent(originalParent);
+            var rt = GetComponent<RectTransform>();
+            if (rt != null) rt.anchoredPosition = Vector2.zero;
             quatity = 1;
         }
         else
         {
-            originalSlot.CurrentItem = null;
-        }
-        originalSlot.CurrentItem = null;
-        //Find player
-        Transform playerTranform = GameObject.FindGameObjectWithTag("Player")?.transform;
-        if(playerTranform == null)
-        {
-            Debug.Log("Miss player tranform");
-            return;
-        }
-        //Random position drop
-        Vector2 dropOffset = Random.insideUnitCircle.normalized*Random.Range(minDropitem, maxDropitem);
-        Vector2 dropPosition = (Vector2)playerTranform.position + dropOffset;
-        //Spawn item new
-       GameObject dropItem =  Instantiate(gameObject, dropPosition, Quaternion.identity);
-        Item droppedItem = dropItem.GetComponent<Item>();
-        droppedItem.quantity = 1;
-        dropItem.GetComponent<BounceEffect>().StartBounce();
-        //Destroy item in inventory
-        if(quatity<=1 && originalSlot.CurrentItem == null)
-        {
-            Destroy(gameObject);
+            if (originalSlot != null)
+            {
+                originalSlot.CurrentItem = null;
+            }
         }
 
-        InventoryController.Intance.RebuildItemCounts();
+        // Find player
+        Transform playerTranform = GameObject.FindGameObjectWithTag("Player")?.transform;
+        if (playerTranform == null)
+        {
+            Debug.LogWarning("DropItem: Player transform not found.");
+            return;
+        }
+
+        // Random position drop
+        Vector2 dropOffset = Random.insideUnitCircle.normalized * Random.Range(minDropitem, maxDropitem);
+        Vector2 dropPosition = (Vector2)playerTranform.position + dropOffset;
+
+        // Spawn item new (world pickup)
+        GameObject dropItem = Instantiate(gameObject, dropPosition, Quaternion.identity);
+        Item droppedItem = dropItem.GetComponent<Item>();
+        if (droppedItem != null)
+        {
+            droppedItem.quantity = 1;
+            var bounce = dropItem.GetComponent<BounceEffect>();
+            if (bounce != null) bounce.StartBounce();
+        }
+        else
+        {
+            Debug.LogWarning("DropItem: spawned drop has no Item component.");
+        }
+
+        // Destroy UI object if we removed it from inventory
+        if (quatity <= 1)
+        {
+            if (originalSlot == null || originalSlot.CurrentItem == null)
+            {
+                Destroy(gameObject);
+            }
+            else
+            {
+                // ensure UI is consistent
+                RevertToOriginal();
+            }
+        }
+
+        InventoryController.Intance?.RebuildItemCounts();
     }
 
     public void OnPointerClick(PointerEventData eventData)

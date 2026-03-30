@@ -9,6 +9,8 @@ public class GameController : MonoBehaviour
 {
     // Start is called before the first frame update
     private string saveLocation;
+    private string questSaveLocation;
+    private string questHandinLocation;
     private InventoryController inventoryController;
     private HotBarController hotBarController;
     private Chest[] chests;
@@ -23,6 +25,7 @@ public class GameController : MonoBehaviour
     {
         //define save locayion
         saveLocation = Path.Combine(Application.persistentDataPath, "saveData.json");
+        questSaveLocation = Path.Combine(Application.persistentDataPath, "questProgress.json");
         inventoryController = FindObjectOfType<InventoryController>();
         hotBarController = FindObjectOfType<HotBarController>();
         chests = FindObjectsOfType<Chest>();
@@ -32,6 +35,7 @@ public class GameController : MonoBehaviour
 
     public void saveGame()
     {
+        // Prepare main save data (remove quest data from main file to avoid duplication)
         SaveData saveData = new SaveData
         {
             PlayerPosition = GameObject.FindGameObjectWithTag("Player").transform.position,
@@ -39,11 +43,25 @@ public class GameController : MonoBehaviour
             InvetorySaveData = inventoryController.GetInventoryItems(),
             HotBarSaveData = hotBarController.GetBarItems(),
             chestsSaveData = GetChestsState(),
-            questProgressesData = QuestController.instance.activeQuests
-
+            HandleIDs = QuestController.instance.handinQuestIDs,
+            questProgressesData = null // intentionally null — quests will be saved to separate file
         };
+
+        // Write main save file
         File.WriteAllText(saveLocation, JsonUtility.ToJson(saveData));
         Debug.Log(saveLocation);
+
+        // Write quest progress to separate file using wrapper (JsonUtility can't serialize top-level List<T>)
+        if (QuestController.instance != null)
+        {
+            var wrapper = new QuestProgressSaveWrapper
+            {
+                questProgresses = QuestController.instance.activeQuests ?? new List<QuestProgress>()
+            };
+            File.WriteAllText(questSaveLocation, JsonUtility.ToJson(wrapper));
+            Debug.Log("Quest save written to: " + questSaveLocation);
+        }
+
         StartCoroutine(ShowMessage());
 
         IEnumerator ShowMessage()
@@ -80,11 +98,22 @@ public class GameController : MonoBehaviour
             MapController.Instance?.GenerateMap(saveMapBoundry);
             inventoryController.SetInventoryItems(saveData.InvetorySaveData);
             hotBarController.SetHotBarItems(saveData.HotBarSaveData);
+            QuestController.instance.handinQuestIDs = saveData.HandleIDs;
 
             //Load chests state
             LoadChestState(saveData.chestsSaveData);
-            QuestController.instance.LoadQuestProgress(saveData.questProgressesData);
 
+            // Load quest progress: prefer separate quest file; fallback to quest data embedded in main save (for backward compat)
+            if (File.Exists(questSaveLocation))
+            {
+                var wrapper = JsonUtility.FromJson<QuestProgressSaveWrapper>(File.ReadAllText(questSaveLocation));
+                QuestController.instance.LoadQuestProgress(wrapper?.questProgresses ?? new List<QuestProgress>());
+            }
+            else
+            {
+                // backward compatibility: if old save had quests inside main file
+                QuestController.instance.LoadQuestProgress(saveData.questProgressesData);
+            }
         }
         else
         {
@@ -97,15 +126,15 @@ public class GameController : MonoBehaviour
 
     public void LoadChestState(List<ChestsSaveData> chestsState)
     {
-        foreach(Chest chest in chests)
+        foreach (Chest chest in chests)
         {
             Debug.Log("Chest ID: " + chest.ChestID);
-            ChestsSaveData chestSaveData = chestsState.FirstOrDefault(c=>c.ChestID== chest.ChestID);
+            ChestsSaveData chestSaveData = chestsState.FirstOrDefault(c => c.ChestID == chest.ChestID);
             if (chestSaveData != null)
             {
                 chest.SetOpend(chestSaveData.isOpened);
             }
         }
     }
-   
+
 }

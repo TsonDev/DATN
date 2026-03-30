@@ -26,3 +26,10 @@ MonoBehaviour:
     currentSellect: 0
     requiredSellect: 3
     type: 0
+  questRewards:
+  - type: 1
+    rewardID: 1
+    amount: 10
+  - type: 1
+    rewardID: 3
+    amount: 2
