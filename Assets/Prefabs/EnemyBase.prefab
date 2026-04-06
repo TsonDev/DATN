@@ -12,10 +12,9 @@ GameObject:
   - component: {fileID: 5061127711007225555}
   - component: {fileID: 4765157071050705657}
   - component: {fileID: 6166205236018423985}
-  - component: {fileID: 5371110379920847620}
-  - component: {fileID: 2872971499404472753}
   - component: {fileID: 9034467492516838570}
   - component: {fileID: 831665894226288064}
+  - component: {fileID: 3080051445072190926}
   m_Layer: 20
   m_Name: EnemyBase
   m_TagString: Enemy
@@ -31,7 +30,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7206813771553638739}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 27.060427, y: 5.5330524, z: -0.88299733}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -79,7 +78,7 @@ SpriteRenderer:
   m_SortingLayerID: -85775281
   m_SortingLayer: 4
   m_SortingOrder: 0
-  m_Sprite: {fileID: -989616256, guid: 4e2675c9ba40f6d42a17e00c4b8950bd, type: 3}
+  m_Sprite: {fileID: -1533092698, guid: 3e6ae9171dc9a9445877757b336457da, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -100,7 +99,7 @@ Animator:
   m_GameObject: {fileID: 7206813771553638739}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 6687f0e6698af774b869516c845f2bba, type: 2}
+  m_Controller: {fileID: 9100000, guid: e8a6f6cc88acdb94ab01f5c38077e664, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -140,10 +139,10 @@ BoxCollider2D:
   m_CallbackLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: 0.0024280548, y: 0.008751392}
+  m_Offset: {x: -0.015007019, y: -0.03047657}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
@@ -154,55 +153,8 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 1
   serializedVersion: 2
-  m_Size: {x: 1.0635757, y: 1.0629873}
+  m_Size: {x: 0.9589653, y: 0.8624878}
   m_EdgeRadius: 0
---- !u!50 &5371110379920847620
-Rigidbody2D:
-  serializedVersion: 4
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7206813771553638739}
-  m_BodyType: 0
-  m_Simulated: 1
-  m_UseFullKinematicContacts: 0
-  m_UseAutoMass: 0
-  m_Mass: 1
-  m_LinearDrag: 0
-  m_AngularDrag: 0.05
-  m_GravityScale: 0
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_Interpolate: 0
-  m_SleepingMode: 1
-  m_CollisionDetection: 0
-  m_Constraints: 4
---- !u!114 &2872971499404472753
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7206813771553638739}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0d2efb71130250945b560d7344eaae70, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  speed: 3
-  changeTime: 3
-  dame: 5
-  stopDistance: 0.5
-  detectRange: 5
-  patrolArea: {fileID: 0}
-  maxHealth: 10
-  currentHealth: 0
 --- !u!114 &9034467492516838570
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -216,7 +168,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Library: []
-  m_SpriteLibraryAsset: {fileID: 7108339969198208228, guid: 54bdb2dd57bbfb144bc6c8a1b63c3daa, type: 3}
+  m_SpriteLibraryAsset: {fileID: 7108339969198208228, guid: b0a30c393ef008f47852ab9064f0dd70, type: 3}
 --- !u!114 &831665894226288064
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -233,3 +185,20 @@ MonoBehaviour:
   m_labelHash: 2.6263963e-13
   m_SpriteKey: 0
   m_SpriteHash: 1027422969
+--- !u!114 &3080051445072190926
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7206813771553638739}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83f896c6ddf62a148af58a16612dacee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  waypointParent: {fileID: 0}
+  moveSpeed: 3
+  waitTimeAtWaypoint: 2
+  loop: 1
+  animator: {fileID: 0}

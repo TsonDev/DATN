@@ -15,7 +15,7 @@ public class PlayerMovement : MonoBehaviour
     }
     PlayerController controller;
     private Rigidbody2D rb;
-    public Vector2 moveInput { get; private set; }
+    public Vector2 moveInput { get; set; }
     public Vector2 lastDir { get; private set; } = Vector2.down;
     private Animator animator;
 
@@ -42,6 +42,12 @@ public class PlayerMovement : MonoBehaviour
     }
     private void FixedUpdate()
     {
+
+        PlayerController playerController = GetComponent<PlayerController>();
+        if(playerController != null && playerController.IsKnockback())
+        {
+            return; // Bỏ qua việc di chuyển nếu đang bị knockback
+        }
         rb.velocity = moveSpeed * moveInput;
     }
     public void Move(InputAction.CallbackContext context)

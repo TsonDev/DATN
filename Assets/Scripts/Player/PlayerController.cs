@@ -6,7 +6,6 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using static DameType;
 
-
 public class PlayerController : MonoBehaviour
 {
     [SerializeField] int maxHealth = 100;
@@ -24,17 +23,24 @@ public class PlayerController : MonoBehaviour
     Animator animator;
     PlayerMovement playerMovement;
     Rigidbody2D rig2d;
+    Collider2D playerCol;
 
     [Header("MeleeWeapon")]
-    public GameObject MeleePrefab; // gán prefab vũ khí cận chiến trong Inspector
+    public GameObject MeleePrefab;
     public bool useMelee = true;
 
     [Header("Melee Setup")]
     public Transform handTransform;
 
+    [Header("Knockback")]
+    [SerializeField] float knockbackDistance = 1.8f;
+    [SerializeField] float knockbackDuration = 0.08f;
+
+    bool isKnockback;
+    Coroutine knockbackCoroutine;
+
     private MeleeWeapon lastSpawnedMelee;
 
-    // Pending attack state to be executed by Animation Event
     enum AttackType { None, Attack1, Attack2 }
     private AttackType _pendingAttack = AttackType.None;
     private Vector2 _pendingAttackDirection = Vector2.right;
@@ -44,6 +50,7 @@ public class PlayerController : MonoBehaviour
         animator = GetComponent<Animator>();
         playerMovement = GetComponent<PlayerMovement>();
         rig2d = GetComponent<Rigidbody2D>();
+        playerCol = GetComponent<Collider2D>();
         skillAoe = GetComponent<SkillAoe>();
         currentHealth = maxHealth;
         healthBarUI = FindAnyObjectByType<HealthBarUI>();
@@ -54,7 +61,7 @@ public class PlayerController : MonoBehaviour
         if (isInvicible)
         {
             timedameCoolDown -= Time.deltaTime;
-            if (timedameCoolDown < 0)
+            if (timedameCoolDown <= 0f)
             {
                 isInvicible = false;
             }
@@ -71,8 +78,66 @@ public class PlayerController : MonoBehaviour
             isInvicible = true;
             timedameCoolDown = timeInvicible;
         }
+
         currentHealth = Mathf.Clamp(currentHealth + amount, 0, maxHealth);
-        healthBarUI.UpdateHealth(currentHealth, maxHealth);
+        if (healthBarUI != null)
+            healthBarUI.UpdateHealth(currentHealth, maxHealth);
+    }
+
+    public void TakeHit(int damage, Vector2 hitDirection, DameType.TypeDamage type)
+    {
+        if (damage <= 0) return;
+        if (isInvicible) return;
+
+        ChangeHealth(-damage, type);
+
+        if (playerMovement != null)
+            playerMovement.moveInput = Vector2.zero;
+
+        if (knockbackCoroutine != null)
+            StopCoroutine(knockbackCoroutine);
+
+        knockbackCoroutine = StartCoroutine(KnockbackRoutine(hitDirection.normalized));
+    }
+
+    IEnumerator KnockbackRoutine(Vector2 dir)
+    {
+        isKnockback = true;
+
+        if (playerCol != null)
+            playerCol.enabled = false;
+
+        if (rig2d != null)
+            rig2d.velocity = Vector2.zero;
+
+        float elapsed = 0f;
+        Vector3 startPos = transform.position;
+        Vector3 targetPos = startPos + (Vector3)(dir * knockbackDistance);
+
+        while (elapsed < knockbackDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / knockbackDuration;
+
+            transform.position = Vector3.Lerp(startPos, targetPos, t);
+            yield return null;
+        }
+
+        transform.position = targetPos;
+
+        if (rig2d != null)
+            rig2d.velocity = Vector2.zero;
+
+        if (playerCol != null)
+            playerCol.enabled = true;
+
+        isKnockback = false;
+        knockbackCoroutine = null;
+    }
+
+    public bool IsKnockback()
+    {
+        return isKnockback;
     }
 
     public void ActivateNatureResistant(float time)
@@ -87,7 +152,6 @@ public class PlayerController : MonoBehaviour
         isNatureInvicible = false;
     }
 
-    // Attack1: now only sets pending attack and triggers animation
     public void Attack1(InputAction.CallbackContext context)
     {
         if (!context.performed) return;
@@ -113,7 +177,6 @@ public class PlayerController : MonoBehaviour
         animator.SetTrigger("Skill1");
     }
 
-    // Attack2: only sets pending attack and triggers animation
     public void Attack2(InputAction.CallbackContext context)
     {
         if (!context.performed) return;
@@ -132,16 +195,14 @@ public class PlayerController : MonoBehaviour
         animator.SetTrigger("Attack2");
     }
 
-    // Called by Animation Event at the frame where the attack should actually spawn
-    // Add an Animation Event that calls "Animation_SpawnAttack" at the desired frame in the Attack clip.
     public void Animation_SpawnAttack()
     {
         if (_pendingAttack == AttackType.None) return;
 
         Vector2 dir = _pendingAttackDirection;
+
         if (_pendingAttack == AttackType.Attack1)
         {
-            // spawn projectile
             if (ProjectTilePrefab != null)
             {
                 var go = Instantiate(ProjectTilePrefab, rig2d.position + dir * 0.5f, Quaternion.identity);
@@ -154,11 +215,11 @@ public class PlayerController : MonoBehaviour
         }
         else if (_pendingAttack == AttackType.Attack2)
         {
-            // spawn melee
             if (useMelee && MeleePrefab != null)
             {
                 var go = Instantiate(MeleePrefab, rig2d.position, Quaternion.identity);
                 var mw = go.GetComponent<MeleeWeapon>();
+
                 if (mw != null)
                 {
                     mw.Setup(dir, handTransform != null ? handTransform : transform);
@@ -172,7 +233,6 @@ public class PlayerController : MonoBehaviour
             }
             else
             {
-                // fallback to projectile if melee not configured
                 if (ProjectTilePrefab != null)
                 {
                     var go = Instantiate(ProjectTilePrefab, rig2d.position + dir * 0.5f, Quaternion.identity);
@@ -181,11 +241,9 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // clear pending so duplicate spawn won't happen
         _pendingAttack = AttackType.None;
     }
 
-    // Animation Events to control melee hitbox (as before)
     public void Animation_EnableMeleeHit()
     {
         lastSpawnedMelee?.EnableHitbox();
@@ -204,6 +262,7 @@ public class PlayerController : MonoBehaviour
 
     public void MovePlayer(InputAction.CallbackContext context)
     {
+        if (isKnockback) return;
         playerMovement.Move(context);
     }
 }

@@ -23,6 +23,7 @@ public class ProjectTile : MonoBehaviour
         TimeDestroy -= Time.deltaTime;
         if (TimeDestroy < 0)
         {
+           
             Destroy(gameObject);
             TimeDestroy = TimeAlive;
         }
@@ -42,7 +43,13 @@ public class ProjectTile : MonoBehaviour
                 enemyBase.ChangeHealth(-damage,DameType.TypeDamage.Projectile);
               
             }
-            Destroy(gameObject);
+            animator.SetBool("isDestroy", true);
+            Destroy(gameObject,1.5f);
+        }
+        if (collision.CompareTag("wall"))
+        {
+            animator.SetBool("isDestroy", true);
+            Destroy(gameObject, 1.5f);
         }
     }
 }

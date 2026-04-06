@@ -4,202 +4,166 @@ public class EnemyBase : MonoBehaviour
 {
     [Header("Movement")]
     public float speed = 2f;
-    public float changeTime = 3f;
-    private Vector2 lastLookDir;
-    private bool isLockedDirection = false;
-
-    [Header("Combat")]
-    public int dame;
-    [Header("Chase")]
     public float stopDistance = 0.5f;
-
-    [Header("Detect")]
     public float detectRange = 5f;
 
-    [Header("Patrol Area")]
-    public BoxCollider2D patrolArea;
+    [Header("Combat")]
+    public int dame = 1;
+    public float attackCooldown = 1f;
 
     [Header("Health")]
     public int maxHealth = 10;
     public int currentHealth;
 
-    private Rigidbody2D rb;
-    private Animator animator;
-    private Transform player;
+    protected Rigidbody2D rb;
+    protected Animator animator;
+    protected Transform player;
 
-    private Vector2 moveDir;
-    private float timer;
-    private bool isChasing = false;
+    protected bool isChasing = false;
+    protected Vector2 lastLookDir = Vector2.down;
 
-    private Bounds bounds;
+    protected float attackTimer;
+    protected WaypointMover waypointMover;
 
-    void Start()
+    protected virtual void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
         currentHealth = maxHealth;
-        timer = changeTime;
+        attackTimer = 0f;
 
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
         if (playerObj != null)
             player = playerObj.transform;
 
-        if (patrolArea != null)
-            bounds = patrolArea.bounds;
-
-        ChooseRandomDirection();
+        waypointMover = GetComponent<WaypointMover>();
     }
 
-    void Update()
+    protected virtual void Update()
     {
-        if (player != null)
+        if (player == null)
         {
-            float distance = Vector2.Distance(transform.position, player.position);
-            isChasing = distance <= detectRange;
+            var playerObj = GameObject.FindGameObjectWithTag("Player");
+            if (playerObj != null)
+                player = playerObj.transform;
         }
 
-        if (!isChasing)
-        {
-            timer -= Time.deltaTime;
-            if (timer <= 0)
-            {
-                ChooseRandomDirection();
-                timer = changeTime;
-            }
-        }
+        if (player == null) return;
+
+        attackTimer -= Time.deltaTime;
+
+        float distance = Vector2.Distance(transform.position, player.position);
+        isChasing = distance <= detectRange;
     }
 
-    void FixedUpdate()
+    protected virtual void FixedUpdate()
     {
-        if (isChasing)
-            ChasePlayer();
+        if (player == null) return;
+        if (!isChasing) return;
+
+        float distance = Vector2.Distance(transform.position, player.position);
+
+        if (distance > stopDistance)
+        {
+            MoveToPlayer();
+        }
         else
-            Patrol();
+        {
+            StopMoveAndFaceTarget();
+
+            if (CanAttack())
+                Attack();
+        }
     }
 
-    void Patrol()
+    protected Vector2 GetCardinalDirection(Vector2 dir)
     {
-        if (IsBlocked(moveDir))
-        {
-            ChooseRandomDirection();
-            return;
-        }
+        if (dir.sqrMagnitude < 0.0001f)
+            return lastLookDir;
 
-        Move(moveDir);
+        if (Mathf.Abs(dir.x) > Mathf.Abs(dir.y))
+            return new Vector2(Mathf.Sign(dir.x), 0f);
+
+        return new Vector2(0f, Mathf.Sign(dir.y));
     }
 
-    void ChasePlayer()
+    protected virtual void MoveToPlayer()
     {
-        Vector2 direction = player.position - transform.position;
-        float distance = direction.magnitude;
+        Vector2 rawDirection = ((Vector2)player.position - rb.position).normalized;
 
-        // Nếu đủ gần → đứng yên + KHÓA hướng
-        if (distance <= stopDistance)
-        {
-            if (!isLockedDirection)
-            {
-                direction.Normalize();
+        // chỉ cập nhật hướng ở lúc ĐANG DI CHUYỂN
+        lastLookDir = GetCardinalDirection(rawDirection);
 
-                // ❌ Không đi chéo
-                if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
-                    lastLookDir = new Vector2(Mathf.Sign(direction.x), 0);
-                else
-                    lastLookDir = new Vector2(0, Mathf.Sign(direction.y));
-
-                isLockedDirection = true;
-            }
-
-            // 👉 chỉ giữ hướng cũ, không update liên tục nữa
-            animator.SetFloat("MoveX", lastLookDir.x);
-            animator.SetFloat("MoveY", lastLookDir.y);
-
-            return;
-        }
-
-        // Nếu ra xa → mở khóa
-        isLockedDirection = false;
-
-        direction.Normalize();
-
-        if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
-            direction = new Vector2(Mathf.Sign(direction.x), 0);
-        else
-            direction = new Vector2(0, Mathf.Sign(direction.y));
-
-        if (IsBlocked(direction))
-        {
-            ChooseRandomDirection();
-            return;
-        }
-
-        Move(direction);
-    }
-
-    void Move(Vector2 dir)
-    {
-        Vector2 newPos = rb.position + dir * speed * Time.fixedDeltaTime;
-
-        // Giới hạn trong vùng BoxCollider
-        if (patrolArea != null)
-        {
-            newPos.x = Mathf.Clamp(newPos.x, bounds.min.x, bounds.max.x);
-            newPos.y = Mathf.Clamp(newPos.y, bounds.min.y, bounds.max.y);
-        }
-
+        Vector2 newPos = rb.position + rawDirection * speed * Time.fixedDeltaTime;
         rb.MovePosition(newPos);
 
-        animator.SetFloat("MoveX", dir.x);
-        animator.SetFloat("MoveY", dir.y);
+        UpdateAnimator(lastLookDir, true);
     }
 
-    void ChooseRandomDirection()
+    protected virtual void StopMoveAndFaceTarget()
     {
-        int rand = Random.Range(0, 4);
+        // Dừng di chuyển
+        rb.velocity = Vector2.zero;
 
-        switch (rand)
+        // Cập nhật lại hướng nhìn (lastLookDir) về phía Player hiện tại
+        Vector2 rawDirection = ((Vector2)player.position - rb.position).normalized;
+        lastLookDir = GetCardinalDirection(rawDirection);
+
+        // Cập nhật Animator
+        UpdateAnimator(lastLookDir, false);
+    }
+
+    protected virtual bool CanAttack()
+    {
+        return attackTimer <= 0f;
+    }
+
+    protected virtual void Attack()
+    {
+        attackTimer = attackCooldown;
+
+        PlayerController playerController = player.GetComponent<PlayerController>();
+        if (playerController != null)
         {
-            case 0: moveDir = Vector2.up; break;
-            case 1: moveDir = Vector2.down; break;
-            case 2: moveDir = Vector2.left; break;
-            case 3: moveDir = Vector2.right; break;
+            Debug.Log("Enemy hit dir = " + lastLookDir);
+            playerController.TakeHit(dame, lastLookDir, DameType.TypeDamage.Monster);
         }
     }
 
-    bool IsBlocked(Vector2 dir)
+    protected virtual void UpdateAnimator(Vector2 direction, bool isMoving)
     {
-        float distance = 0.5f;
-        RaycastHit2D hit = Physics2D.Raycast(transform.position, dir, distance);
+        if (animator == null) return;
 
-        if (hit.collider != null && !hit.collider.isTrigger)
-        {
-            return true;
-        }
-
-        return false;
+        animator.SetFloat("lastInputX", direction.x);
+        animator.SetFloat("lastInputY", direction.y);
+        animator.SetBool("isMoving", isMoving);
     }
 
-    void OnTriggerEnter2D(Collider2D other)
+    protected virtual void OnTriggerEnter2D(Collider2D other)
     {
-        PlayerController player = other.GetComponent<PlayerController>();
-
-        if (player != null)
-        {
-            player.ChangeHealth(-dame, DameType.TypeDamage.Monster);
-        }
-
         ProjectTile projectile = other.GetComponent<ProjectTile>();
         if (projectile != null)
         {
-            //animator.SetTrigger("Hit");
-            Destroy(gameObject, 1f);
+            ChangeHealth(-projectile.damage, DameType.TypeDamage.Projectile);
         }
     }
-    public void ChangeHealth(int amount, DameType.TypeDamage type)
+
+    public virtual void ChangeHealth(int amount, DameType.TypeDamage type)
     {
         currentHealth = Mathf.Clamp(currentHealth + amount, 0, maxHealth);
+
         if (currentHealth <= 0)
         {
-                Destroy(gameObject);
+            animator.SetBool("isDead", true);
+            Die();
         }
     }
+
+    protected virtual void Die()
+    {
+        Destroy(gameObject, 1f);
+    }
+
+    protected virtual void OnPlayerDetected() { }
+    protected virtual void OnPlayerLost() { }
 }

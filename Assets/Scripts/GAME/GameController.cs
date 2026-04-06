@@ -15,6 +15,7 @@ public class GameController : MonoBehaviour
     private HotBarController hotBarController;
     private Chest[] chests;
     [SerializeField] private GameObject StatusImage;
+    private ShopNPC[] shopNPCs;
     void Start()
     {
 
@@ -29,6 +30,7 @@ public class GameController : MonoBehaviour
         inventoryController = FindObjectOfType<InventoryController>();
         hotBarController = FindObjectOfType<HotBarController>();
         chests = FindObjectsOfType<Chest>();
+        shopNPCs = FindObjectsOfType<ShopNPC>();
         //thông báo lưu thành công
         StatusImage.SetActive(false);
     }
@@ -44,6 +46,8 @@ public class GameController : MonoBehaviour
             HotBarSaveData = hotBarController.GetBarItems(),
             chestsSaveData = GetChestsState(),
             HandleIDs = QuestController.instance.handinQuestIDs,
+            Gold = CurrencyController.instance.GetGold(),
+            shopStates = GetShopStates(),
             questProgressesData = null // intentionally null — quests will be saved to separate file
         };
 
@@ -70,6 +74,28 @@ public class GameController : MonoBehaviour
             yield return new WaitForSeconds(2);
             StatusImage.SetActive(false);
         }
+    }
+    private List<ShopIntanceData> GetShopStates()
+    {
+        List<ShopIntanceData> shopStates = new List<ShopIntanceData>();
+        foreach (ShopNPC shop in shopNPCs)
+        {
+            ShopIntanceData shopData = new ShopIntanceData
+            {
+                shopID = shop.ShopID,
+                stock = new List<ShopItemData>()
+            };
+            foreach(ShopNPC.ShopstockItem item in shop.GetCurrentStock())
+            {
+                shopData.stock.Add(new ShopItemData
+                {
+                    itemID = item.itemID,
+                    quantity = item.quantity
+                });
+            }
+            shopStates.Add(shopData);
+        }
+        return shopStates;
     }
     private List<ChestsSaveData> GetChestsState()
     {
@@ -102,6 +128,9 @@ public class GameController : MonoBehaviour
 
             //Load chests state
             LoadChestState(saveData.chestsSaveData);
+            LoadShopState(saveData.shopStates);
+            CurrencyController.instance.SetGold(saveData.Gold);
+
 
             // Load quest progress: prefer separate quest file; fallback to quest data embedded in main save (for backward compat)
             if (File.Exists(questSaveLocation))
@@ -133,6 +162,31 @@ public class GameController : MonoBehaviour
             if (chestSaveData != null)
             {
                 chest.SetOpend(chestSaveData.isOpened);
+            }
+        }
+    }
+    void LoadShopState(List<ShopIntanceData> shopStates)
+    {
+        if(shopStates == null)
+        {
+            Debug.LogWarning("No shop state data found in save file.");
+            return;
+        }
+        foreach (ShopNPC shop in shopNPCs)
+        {
+            ShopIntanceData shopData = shopStates.FirstOrDefault(s => s.shopID == shop.ShopID);
+            if (shopData != null)
+            {
+                List<ShopNPC.ShopstockItem> loadedStock = shop.GetCurrentStock();
+                foreach (ShopItemData itemData in shopData.stock)
+                {
+                   loadedStock.Add(new ShopNPC.ShopstockItem
+                    {
+                        itemID = itemData.itemID,
+                        quantity = itemData.quantity
+                    });
+                }
+                shop.SetStock(loadedStock);
             }
         }
     }

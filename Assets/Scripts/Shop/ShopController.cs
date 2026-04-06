@@ -126,6 +126,26 @@ public class ShopController : MonoBehaviour
         
 
         //ItemHandler
+        ItemDragHandler itemDragHandler = itemInstance.GetComponent<ItemDragHandler>();
+        if (itemDragHandler != null)
+        {
+            itemDragHandler.enabled = false;
+        }
+        ShopItemDragger shopHandler = itemInstance.AddComponent<ShopItemDragger>();
+        shopHandler.Initialize(isShop);
+        if(!isShop) shopHandler.originalIventorySlot = original;
     }
-
+    public void AddItemToShop(int itemID, int quantity)
+    {
+        if (currentShop == null) return;
+        currentShop.AddStock(itemID, quantity);
+        RefreshShopDisplay();
+    }
+    public bool RemoveItemFromShop(int itemID, int quantity)
+     {
+            if (currentShop == null) return false;
+           bool sucess =  currentShop.RemoveStock(itemID, quantity);
+           if(sucess) RefreshShopDisplay();
+           return sucess;
+    }
 }

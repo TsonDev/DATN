@@ -12,6 +12,8 @@ public class SaveData
     public List<ChestsSaveData> chestsSaveData;
     public List<QuestProgress> questProgressesData;
     public List<string> HandleIDs;
+    public int Gold;
+    public List<ShopIntanceData> shopStates = new List<ShopIntanceData>();
 
 }
 [System.Serializable]
@@ -20,7 +22,18 @@ public class ChestsSaveData
     public string ChestID;
     public bool isOpened;
 }
-
+[System.Serializable]
+public class ShopIntanceData
+{
+    public string shopID;
+    public List<ShopItemData> stock = new List<ShopItemData>();
+}
+[System.Serializable]
+public class ShopItemData
+{
+    public int itemID;
+    public int quantity;
+}
 // Wrapper để JsonUtility có thể serialize/deserialize top-level List<QuestProgress>
 [System.Serializable]
 public class QuestProgressSaveWrapper
