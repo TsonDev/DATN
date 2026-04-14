@@ -1,16 +1,34 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class MenuEvents : MonoBehaviour
 {
-	// Hàm này để load scene khác theo index (gán trong Build Settings)
-	public void LoadScene(int index)
+	GameController gameController;
+    // Hàm này để load scene khác theo index (gán trong Build Settings)
+    public void LoadScene(int index)
 	{
-		SceneManager.LoadScene(index);
-	}
-	public void ButtonMusic()
+       
+
+        SceneManager.LoadScene(index);
+    }
+    public void Newgame(int index)
+    {
+        GameController.isNewGame = true;
+
+        string path1 = Application.persistentDataPath + "/saveData.json";
+        string path2 = Application.persistentDataPath + "/questProgress.json";
+
+        if (File.Exists(path1)) File.Delete(path1);
+        if (File.Exists(path2)) File.Delete(path2);
+
+        Debug.Log("ĐÃ XÓA SAVE");
+
+        SceneManager.LoadScene(index);
+    }
+    public void ButtonMusic()
 	{
 		if (AudioManager_Fight.instance != null)
 			AudioManager_Fight.instance.PlayButton();

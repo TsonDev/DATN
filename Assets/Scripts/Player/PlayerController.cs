@@ -4,12 +4,14 @@ using System.Collections.Generic;
 using System.Data;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 using static DameType;
 
 public class PlayerController : MonoBehaviour
 {
-    [SerializeField] int maxHealth = 100;
-    int currentHealth;
+    int indexScene = 0;
+    [SerializeField] public int maxHealth = 100;
+    public int currentHealth;
     public float timeInvicible = 1f;
     float timedameCoolDown;
     bool isNatureInvicible;
@@ -82,6 +84,10 @@ public class PlayerController : MonoBehaviour
         currentHealth = Mathf.Clamp(currentHealth + amount, 0, maxHealth);
         if (healthBarUI != null)
             healthBarUI.UpdateHealth(currentHealth, maxHealth);
+        if(currentHealth <= 0)
+        {
+            Die();
+        }
     }
 
     public void TakeHit(int damage, Vector2 hitDirection, DameType.TypeDamage type)
@@ -98,6 +104,18 @@ public class PlayerController : MonoBehaviour
             StopCoroutine(knockbackCoroutine);
 
         knockbackCoroutine = StartCoroutine(KnockbackRoutine(hitDirection.normalized));
+    }
+    public void Die()
+    {
+        // Handle player death (e.g., play animation, disable controls, etc.)
+        StartCoroutine(LoadDelay(indexScene));
+        Debug.Log("Player has died.");
+    }
+    IEnumerator LoadDelay(int indexScence)
+    {
+        yield return new WaitForSeconds(1.5f); // 👉 thời gian load giả
+
+        SceneManager.LoadScene(indexScence);
     }
 
     IEnumerator KnockbackRoutine(Vector2 dir)
@@ -193,6 +211,11 @@ public class PlayerController : MonoBehaviour
         animator.SetFloat("lastInputX", dir.x);
         animator.SetFloat("lastInputY", dir.y);
         animator.SetTrigger("Attack2");
+    }
+    public void Untilmate(InputAction.CallbackContext context)
+    {
+        //Use ultimate skill here
+        FindObjectOfType<UltimateEffect>().PlayUltimate();
     }
 
     public void Animation_SpawnAttack()

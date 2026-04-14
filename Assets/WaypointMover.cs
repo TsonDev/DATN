@@ -21,10 +21,13 @@ public class WaypointMover : MonoBehaviour
 
     void Start()
     {
-        waypoints = new Transform[waypointParent.childCount];
-        for (int i = 0; i < waypointParent.childCount; i++)
+        if (waypointParent != null && waypointParent.childCount > 0)
         {
-            waypoints[i] = waypointParent.GetChild(i);
+            waypoints = new Transform[waypointParent.childCount];
+            for (int i = 0; i < waypointParent.childCount; i++)
+            {
+                waypoints[i] = waypointParent.GetChild(i);
+            }
         }
 
         if (animator == null)
@@ -41,7 +44,7 @@ public class WaypointMover : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Time.timeScale == 0f || isWaiting) return; // Don't move if the game is paused or waiting
+        if (Time.timeScale == 0f || isWaiting || waypoints == null || waypoints.Length == 0) return; // Don't move if the game is paused, waiting, or no waypoints exist
 
         MoveToWaypoint();
     }

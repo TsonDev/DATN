@@ -16,6 +16,8 @@ public class GameController : MonoBehaviour
     private Chest[] chests;
     [SerializeField] private GameObject StatusImage;
     private ShopNPC[] shopNPCs;
+    public static bool isNewGame = false;
+    
     void Start()
     {
 
@@ -53,6 +55,7 @@ public class GameController : MonoBehaviour
 
         // Write main save file
         File.WriteAllText(saveLocation, JsonUtility.ToJson(saveData));
+       
         Debug.Log(saveLocation);
 
         // Write quest progress to separate file using wrapper (JsonUtility can't serialize top-level List<T>)
@@ -113,6 +116,18 @@ public class GameController : MonoBehaviour
     }
     public void LoadGame()
     {
+        if (isNewGame)
+        {
+            Debug.Log("New Game - không load save");
+
+            isNewGame = false;
+
+            inventoryController.SetInventoryItems(new List<InvetorySaveData>());
+            hotBarController.SetHotBarItems(new List<InvetorySaveData>());
+            MapController.Instance?.GenerateMap();
+
+            return;
+        }
         if (File.Exists(saveLocation))
         {
             SaveData saveData = JsonUtility.FromJson<SaveData>(File.ReadAllText(saveLocation));
@@ -146,10 +161,14 @@ public class GameController : MonoBehaviour
         }
         else
         {
-            saveGame();
-            inventoryController.SetInventoryItems(new List<InvetorySaveData>());
-            hotBarController.SetHotBarItems(new List<InvetorySaveData>());
-            MapController.Instance?.GenerateMap();
+            if (isNewGame==false)
+            {
+                saveGame();
+                inventoryController.SetInventoryItems(new List<InvetorySaveData>());
+                hotBarController.SetHotBarItems(new List<InvetorySaveData>());
+                MapController.Instance?.GenerateMap();
+            }
+                
         }
     }
 
@@ -190,5 +209,18 @@ public class GameController : MonoBehaviour
             }
         }
     }
+    public void ClearAllData()
+    {
+        isNewGame = true;
+        string path1 = Application.persistentDataPath + "/saveData.json";
+        string path2 = Application.persistentDataPath + "/questProgress.json";
+
+        if (File.Exists(path1))
+            File.Delete(path1);
+
+        if (File.Exists(path2))
+            File.Delete(path2);
+    }
+
 
 }

@@ -56,4 +56,10 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/FishFishFish/FishFishFish/Scene.unity
     guid: 29455a4f795f81149985272498c6df27
+  - enabled: 1
+    path: Assets/Scenes/StartScence.unity
+    guid: f42018270b44b6c44bc3f7d848a37477
+  - enabled: 1
+    path: Assets/Scenes/MenuScence.unity
+    guid: 0e0d9d0dac1930c4983e4b19c8994e76
   m_configObjects: {}

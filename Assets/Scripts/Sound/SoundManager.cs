@@ -12,10 +12,15 @@ public class SoundManager : MonoBehaviour
     void Awake()
     {
         if (Instance == null)
+        {
             Instance = this;
+            DontDestroyOnLoad(gameObject); // Cho phép SoundManager mang sang scene khác
+        }
         else
+        {
+            // Chỉ xóa GameObject SoundManager trùng lặp, không xóa luôn cả Canvas/Background nếu vô tình gắn chung
             Destroy(gameObject);
-
+        }
     }
     public void PlaySound(SoundData sound)
     {
@@ -42,6 +47,19 @@ public class SoundManager : MonoBehaviour
     }
     public void SetVolumeSFX(float value)
     {
-        bgmSource.volume = value;
+        sfxSource.volume = value;  // fix: phải là sfxSource
+    }
+
+    // --- Dành cho SettingUI gọi ---
+    /// <summary>Điều chỉnh âm lượng nhạc nền (BGM). Gọi từ SettingUI.</summary>
+    public void SetMasterVolumeBGM(float value)
+    {
+        bgmSource.volume = Mathf.Clamp01(value);
+    }
+
+    /// <summary>Điều chỉnh âm lượng hiệu ứng âm thanh (SFX). Gọi từ SettingUI.</summary>
+    public void SetMasterVolumeSFX(float value)
+    {
+        sfxSource.volume = Mathf.Clamp01(value);
     }
 }

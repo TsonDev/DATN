@@ -38,10 +38,16 @@ public class ProjectTile : MonoBehaviour
         if (collision.CompareTag("Enemy"))
         {
             EnemyBase enemyBase = collision.GetComponent<EnemyBase>();
-            if (enemyBase != null)
+            EnemyShoot enemyShoot = collision.GetComponent<EnemyShoot>();
+            if (enemyBase != null )
             {
                 enemyBase.ChangeHealth(-damage,DameType.TypeDamage.Projectile);
-              
+                
+            }
+            if (enemyShoot != null )
+            {
+               
+                enemyShoot.ChangeHealth(-damage,DameType.TypeDamage.Projectile);
             }
             animator.SetBool("isDestroy", true);
             Destroy(gameObject,1.5f);

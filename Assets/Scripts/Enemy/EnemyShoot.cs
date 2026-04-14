@@ -15,6 +15,9 @@ public class EnemyShoot : MonoBehaviour
     public float aoeCooldown = 2f;
     public int aoeDamage = 2;
     public GameObject aoeEffectPrefab;
+    [Header("Health")]
+    public int maxHealth = 10;
+    public int currentHealth;
 
     private float nextAOETime;
 
@@ -29,6 +32,8 @@ public class EnemyShoot : MonoBehaviour
         player = GameObject.FindGameObjectWithTag("Player")?.transform;
         animator = GetComponent<Animator>();
         waypointMover = GetComponent<WaypointMover>();
+        currentHealth = maxHealth;
+        
     }
 
     void Update()
@@ -75,6 +80,21 @@ public class EnemyShoot : MonoBehaviour
         }
     }
 
+    public virtual void ChangeHealth(int amount, DameType.TypeDamage type)
+    {
+        currentHealth = Mathf.Clamp(currentHealth + amount, 0, maxHealth);
+
+        if (currentHealth <= 0)
+        {
+            animator.SetBool("isDead", true);
+            Die();
+        }
+    }
+
+    protected virtual void Die()
+    {
+        Destroy(gameObject, 1f);
+    }
     void Shoot(Vector2 dir)
     {
         if (projectilePrefab == null) return;
