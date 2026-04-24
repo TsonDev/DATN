@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -62,5 +62,19 @@ public class Item : MonoBehaviour
     public virtual void UseItem()
     {
         Debug.Log("Using item "+ Name +"Id "+ID);
+        switch (ID)
+        {
+            case 1:
+                // Ví dụ: ID 1 là item hồi máu
+                PlayerController playerController = FindObjectOfType<PlayerController>();
+                if (playerController != null)
+                {
+                    playerController.ChangeHealth(10,DameType.TypeDamage.Heal); // 
+                    RemoveFromStack(1);
+                }
+                break;
+            default:
+                break;
+        }
     }
 }

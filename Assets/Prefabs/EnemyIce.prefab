@@ -204,7 +204,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95197f920eb3f674d917b6d4adfd5bd2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  speed: 2
+  stopDistance: 0.5
   detectRange: 4.89
+  dame: 1
+  attackCooldown: 1
+  maxHealth: 10
+  currentHealth: 0
+  regenDelay: 10
+  regenPerSecond: 2
+  healthBarPrefab: {fileID: 8572646786556027366, guid: 637c9e884b006154282170268c301a75, type: 3}
+  healthBarOffset: {x: 0, y: 0, z: 0}
   projectilePrefab: {fileID: 7055741981552325213, guid: 82f286ada7088ce49a0d8fca8c9f17f1, type: 3}
   firePoint: {fileID: 7182777955388726664}
   fireCooldown: 1.5
@@ -212,8 +222,6 @@ MonoBehaviour:
   aoeCooldown: 2
   aoeDamage: 2
   aoeEffectPrefab: {fileID: 5952430009457394505, guid: 1003f51f0330b1a41a177918c12a1156, type: 3}
-  maxHealth: 10
-  currentHealth: 0
 --- !u!61 &5803144934975411106
 BoxCollider2D:
   m_ObjectHideFlags: 0

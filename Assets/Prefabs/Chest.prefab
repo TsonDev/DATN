@@ -99,7 +99,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   soundEff: {fileID: 11400000, guid: ba86fab910a20b84aa7bea8532a15786, type: 2}
-  itemPrefabs: {fileID: 4502136594987837928, guid: 2de16d5976e8e8f47979885885244def, type: 3}
+  itemPrefabs: {fileID: 5101600719575488339, guid: c4aa41a0e9cb7324baa83f0a5715dd87, type: 3}
   opendedSprite: {fileID: 544807356, guid: ac7f9be9471c5384d8d5779e93a09f56, type: 3}
 --- !u!61 &5297311847845661342
 BoxCollider2D:

@@ -123,6 +123,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   TimeAlive: 3
   damage: 3
+  quantity: 30
+  quantityText: {fileID: 648840911931085622, guid: 7e7486927e859f041b70d21ca62af1fd, type: 3}
 --- !u!50 &6386730412543113393
 Rigidbody2D:
   serializedVersion: 4

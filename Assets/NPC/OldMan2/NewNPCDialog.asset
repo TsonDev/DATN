@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f710cca1d55d2bb4192ed58db5675df7, type: 3}
+  m_Name: NewNPCDialog
+  m_EditorClassIdentifier: 
+  npcName: Orochimaru
+  npcPortrait: {fileID: 21300000, guid: 83fc13e18906f114f819a53a14ee9f5a, type: 3}
+  dialogLines:
+  - The Elder sent you? The Shard is in this dungeon. Clear the monsters outside
+    first. Ready?
+  - Show your strength! Defeat them to open the door
+  - Return when your blade is sharp
+  - Defeat more monsters! Then enter the dungeon!
+  - Good job. Take the Shard back to the Elder.
+  - See you later
+  autoProgressLines: 010000000000
+  EndProgressLines: 000101000001
+  autoProgressDisplay: 1.5
+  typingSpeed: 0.05
+  choices:
+  - dialogIndex: 0
+    choices:
+    - Yes, I am
+    - Not yet
+    nextDialogIndexes: 0100000002000000
+    giveQuest: 0000
+  questInprogressIndex: 3
+  questCompletedIndex: 1
+  quest: {fileID: 0}

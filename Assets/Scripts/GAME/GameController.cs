@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -49,6 +49,8 @@ public class GameController : MonoBehaviour
             chestsSaveData = GetChestsState(),
             HandleIDs = QuestController.instance.handinQuestIDs,
             Gold = CurrencyController.instance.GetGold(),
+            CurrentAmmo = AmmoManager.Instance != null ? AmmoManager.Instance.GetCurrentAmmo() : 30,
+            MaxAmmo = AmmoManager.Instance != null ? AmmoManager.Instance.GetMaxAmmo() : 99,
             shopStates = GetShopStates(),
             questProgressesData = null // intentionally null — quests will be saved to separate file
         };
@@ -126,6 +128,10 @@ public class GameController : MonoBehaviour
             hotBarController.SetHotBarItems(new List<InvetorySaveData>());
             MapController.Instance?.GenerateMap();
 
+            // Reset đạn về mặc định khi new game
+            if (AmmoManager.Instance != null)
+                AmmoManager.Instance.ResetAmmo();
+
             return;
         }
         if (File.Exists(saveLocation))
@@ -145,6 +151,10 @@ public class GameController : MonoBehaviour
             LoadChestState(saveData.chestsSaveData);
             LoadShopState(saveData.shopStates);
             CurrencyController.instance.SetGold(saveData.Gold);
+
+            // Load số đạn (chỉ load nếu save có dữ liệu đạn hợp lệ, tránh save cũ ghi đè = 0)
+            if (AmmoManager.Instance != null && saveData.MaxAmmo > 0)
+                AmmoManager.Instance.SetAmmo(saveData.CurrentAmmo, saveData.MaxAmmo);
 
 
             // Load quest progress: prefer separate quest file; fallback to quest data embedded in main save (for backward compat)

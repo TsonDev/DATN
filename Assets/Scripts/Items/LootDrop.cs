@@ -46,11 +46,7 @@ public class LootDrop : MonoBehaviour
         foreach (DropItem drop in droppableItems)
         {
             if (drop.itemPrefab == null) continue;
-
-            // Đổ xí ngầu từ 0 đến 100
             float randomValue = Random.Range(0f, 100f);
-
-            // Nếu con số ngẫu nhiên lọt vào trong khoảng tỉ lệ thì rớt đồ
             if (randomValue <= drop.dropChance)
             {
                 // Tạo một vị trí nảy đồ ra bán kính xung quanh
@@ -65,8 +61,6 @@ public class LootDrop : MonoBehaviour
                 {
                     bounce.StartBounce();
                 }
-
-                // Nếu không cho phép rớt nhiều đồ cùng lúc, thì ngưng ngay sau khi rớt món đầu tiên
                 if (!dropMultipleItems)
                 {
                     break;

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
@@ -9,10 +9,16 @@ using static DameType;
 
 public class PlayerController : MonoBehaviour
 {
-    int indexScene = 0;
+    public int indexScene = 0;
     [SerializeField] public int maxHealth = 100;
     public int currentHealth;
     public float timeInvicible = 1f;
+
+    [Header("Energy System")]
+    public float maxEnergy = 100f;
+    public float currentEnergy;
+    public float energyRegenRate = 5f; // Số năng lượng tự hồi phục mỗi giây
+    public ManaBarUI energyBarUI; 
     float timedameCoolDown;
     bool isNatureInvicible;
     bool isInvicible;
@@ -55,7 +61,26 @@ public class PlayerController : MonoBehaviour
         playerCol = GetComponent<Collider2D>();
         skillAoe = GetComponent<SkillAoe>();
         currentHealth = maxHealth;
-        healthBarUI = FindAnyObjectByType<HealthBarUI>();
+        
+        // Tìm toàn bộ HealthBarUI trên scene. 
+        // Lấy cái nào KHÔNG phải là con của các enemy (thường nằm trực tiếp ở vòng ngoài UI tên là HealthBar)
+        HealthBarUI[] allHealthBars = FindObjectsOfType<HealthBarUI>();
+        foreach (var hb in allHealthBars)
+        {
+            // HealthBar của người chơi thường nằm trong UI Canvas chính, ko nằm trong quái
+            if (hb.transform.parent == null || hb.transform.root.GetComponent<EnemyBase>() == null)
+            {
+                healthBarUI = hb;
+                break;
+            }
+        }
+
+        currentEnergy = maxEnergy;
+        if (energyBarUI != null)
+        {
+            energyBarUI.UpdateMana(currentEnergy, maxEnergy);
+        }
+      
     }
 
     void Update()
@@ -68,6 +93,29 @@ public class PlayerController : MonoBehaviour
                 isInvicible = false;
             }
         }
+
+        // Tự động hồi năng lượng
+        if (currentEnergy < maxEnergy)
+        {
+            currentEnergy += energyRegenRate * Time.deltaTime;
+            currentEnergy = Mathf.Clamp(currentEnergy, 0f, maxEnergy);
+            if (energyBarUI != null)
+            {
+                energyBarUI.UpdateMana(currentEnergy, maxEnergy);
+            }
+        }
+    }
+
+    public bool TryConsumeEnergy(float amount)
+    {
+        if (currentEnergy >= amount)
+        {
+            currentEnergy -= amount;
+            if (energyBarUI != null)
+                energyBarUI.UpdateMana(currentEnergy, maxEnergy);
+            return true;
+        }
+        return false;
     }
 
     public void ChangeHealth(int amount, DameType.TypeDamage type)
@@ -113,7 +161,7 @@ public class PlayerController : MonoBehaviour
     }
     IEnumerator LoadDelay(int indexScence)
     {
-        yield return new WaitForSeconds(1.5f); // 👉 thời gian load giả
+        yield return new WaitForSeconds(1.5f); //  thời gian load giả
 
         SceneManager.LoadScene(indexScence);
     }
@@ -170,6 +218,15 @@ public class PlayerController : MonoBehaviour
         isNatureInvicible = false;
     }
 
+    public void ActivateInvincibleForDash(float time)
+    {
+        if (!isInvicible || timedameCoolDown < time)
+        {
+            isInvicible = true;
+            timedameCoolDown = time;
+        }
+    }
+
     public void Attack1(InputAction.CallbackContext context)
     {
         if (!context.performed) return;
@@ -191,8 +248,19 @@ public class PlayerController : MonoBehaviour
     public void Skill1(InputAction.CallbackContext context)
     {
         if (!context.performed) return;
-        skillAoe.ActivateAura();
-        animator.SetTrigger("Skill1");
+
+        if (skillAoe != null)
+        {
+            if (TryConsumeEnergy(skillAoe.energyCost))
+            {
+                skillAoe.ActivateAura();
+                animator.SetTrigger("Skill1");
+            }
+            else
+            {
+                Debug.Log("Không đủ năng lượng hoặc thể lực để dùng Skill 1!");
+            }
+        }
     }
 
     public void Attack2(InputAction.CallbackContext context)
@@ -228,6 +296,13 @@ public class PlayerController : MonoBehaviour
         {
             if (ProjectTilePrefab != null)
             {
+                // Kiểm tra đạn trước khi bắn
+                if (AmmoManager.Instance != null && !AmmoManager.Instance.TryConsumeAmmo())
+                {
+                    Debug.Log("Out of ammo!");
+                    _pendingAttack = AttackType.None;
+                    return;
+                }
                 var go = Instantiate(ProjectTilePrefab, rig2d.position + dir * 0.5f, Quaternion.identity);
                 go.GetComponent<ProjectTile>()?.LunchProTile(dir, 300);
             }
@@ -258,6 +333,13 @@ public class PlayerController : MonoBehaviour
             {
                 if (ProjectTilePrefab != null)
                 {
+                    // Kiểm tra đạn trước khi bắn (fallback projectile)
+                    if (AmmoManager.Instance != null && !AmmoManager.Instance.TryConsumeAmmo())
+                    {
+                        Debug.Log("Out of ammo!");
+                        _pendingAttack = AttackType.None;
+                        return;
+                    }
                     var go = Instantiate(ProjectTilePrefab, rig2d.position + dir * 0.5f, Quaternion.identity);
                     go.GetComponent<ProjectTile>()?.LunchProTile(dir, 300);
                 }
@@ -287,5 +369,14 @@ public class PlayerController : MonoBehaviour
     {
         if (isKnockback) return;
         playerMovement.Move(context);
+    }
+
+    public void Dash(InputAction.CallbackContext context)
+    {
+        if (!context.performed) return;
+        if (playerMovement != null)
+        {
+            playerMovement.TryDash();
+        }
     }
 }

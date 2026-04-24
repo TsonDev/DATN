@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -30,10 +30,13 @@ public class QuestObjective
     public int currentSellect;
     public int requiredSellect;
 
+    [Tooltip("Chỉ dùng cho loại CheckItemLoadScene: tên scene sẽ được load khi đủ item.")]
+    public string sceneToLoad;
+
     public bool IsCompleted => currentSellect >= requiredSellect;
     public QuestObjectType type;
 }
-public enum QuestObjectType { CollectItem, DefeatEnemy, ReachLocation, TalkNpc, Custom }
+public enum QuestObjectType { CollectItem, DefeatEnemy, ReachLocation, TalkNpc, Custom, CheckItemLoadScene }
 
 [System.Serializable]
 public class QuestProgress
@@ -54,6 +57,7 @@ public class QuestProgress
                 currentSellect = 0,
                 requiredSellect = obj.requiredSellect,
                 type = obj.type,
+                sceneToLoad = obj.sceneToLoad,
             });
         }
     }

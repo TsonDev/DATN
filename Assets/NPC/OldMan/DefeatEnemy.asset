@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f710cca1d55d2bb4192ed58db5675df7, type: 3}
+  m_Name: DefeatEnemy
+  m_EditorClassIdentifier: 
+  npcName: Old man
+  npcPortrait: {fileID: 21300000, guid: f64a2a86360332f43a8ad9e9ba4f9aa9, type: 3}
+  dialogLines:
+  - Now, The South tower need have
+  - Can you help?
+  - Defeat 5 enemy melee
+  - Good luck!
+  - oh..goob bye
+  - Thank, this gift for thank you
+  - goodbye
+  autoProgressLines: 01000001000000
+  EndProgressLines: 00000101010001
+  autoProgressDisplay: 1.5
+  typingSpeed: 0.05
+  choices:
+  - dialogIndex: 1
+    choices:
+    - Yes
+    - No
+    nextDialogIndexes: 0200000004000000
+    giveQuest: 0100
+  questInprogressIndex: 3
+  questCompletedIndex: 5
+  quest: {fileID: 11400000, guid: 791f89d8e541d3d4c934c5b2fc13da6c, type: 2}

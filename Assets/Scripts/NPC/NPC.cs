@@ -6,8 +6,17 @@ using UnityEngine.UI;
 
 public class NPC : MonoBehaviour,IInteractable
 {
+    [Tooltip("Hội thoại/Nhiệm vụ đơn (chỉ chạy 1 lần)")]
     public NPCDialog dialogData;
+    
+    [Tooltip("Chuỗi Hội thoại/Nhiệm vụ. Chạy theo thứ tự từ trên xuống dưới cứ mỗi khi trả xong một nhiệm vụ.")]
+    public NPCDialog[] dialogChain;
+
     [SerializeField] SoundData talkSound;
+
+    [Header("Quest")]
+    [Tooltip("ID này phải khớp với objectiveID trong Quest loại TalkNpc. Để 0 nếu NPC này không thuộc quest nào.")]
+    public int npcID = 0;
 
     private int dialogIndex;
     private bool isTyping, isDialogActive;
@@ -19,8 +28,9 @@ public class NPC : MonoBehaviour,IInteractable
     }
     public void Interact()
     {
-        if(dialogData == null ) /*pauseController &&*//*!isDialogActive)*/
+        if(dialogData == null )
         {
+            Debug.LogWarning($"[NPC] '{gameObject.name}' chưa có DialogData! Hãy tạo NPCDialog ScriptableObject và gán vào field 'Dialog Data' trong Inspector.");
             return;
         }
         if (isDialogActive)
@@ -51,6 +61,19 @@ public class NPC : MonoBehaviour,IInteractable
         {
             dialogIndex = dialogData.questCompletedIndex;
         }
+
+        // --- Kiểm tra an toàn chống lỗi (Safety Check) ---
+        if (dialogData == null || dialogData.dialogLines == null || dialogData.dialogLines.Length == 0)
+        {
+            Debug.LogWarning("Hội thoại NPC của bạn chưa có chữ nào ở Dialog Lines cả! Bỏ qua hội thoại.");
+            return;
+        }
+        if (dialogIndex >= dialogData.dialogLines.Length || dialogIndex < 0)
+        {
+            Debug.LogWarning("Chỉ số Quest Index lớn hơn số dòng hội thoại thực tế! Hãy kiểm tra lại questInprogressIndex hoặc questCompletedIndex trong Inspector. Tự động lùi về vị trí an toàn.");
+            dialogIndex = dialogData.dialogLines.Length - 1;
+        }
+
         isDialogActive = true;
        
         //nameText.SetText(dialogData.npcName);
@@ -64,9 +87,41 @@ public class NPC : MonoBehaviour,IInteractable
         //StartCoroutine(Typeline());
         DisplayCurrentLine();
     }
+    private void UpdateDialogData()
+    {
+        if (dialogChain != null && dialogChain.Length > 0)
+        {
+            for (int i = 0; i < dialogChain.Length; i++)
+            {
+                dialogData = dialogChain[i];
+                
+                // Nếu NPC ở mốc này có Quest và Quest đó ĐÃ ĐƯỢC TRẢ THƯỞNG xong
+                if (dialogData.quest != null && QuestController.instance.IsHandin(dialogData.quest.questID))
+                {
+                    // Nếu không phải là đoạn hội thoại cuối cùng trong mảng, thì nhảy sang đoạn tiếp theo
+                    if (i < dialogChain.Length - 1)
+                    {
+                        continue;
+                    }
+                }
+                else
+                {
+                    // Nếu chưa trả thưởng xong (có thể là chưa nhận, hoặc đang làm), thì chốt dừng ở hội thoại này
+                    break;
+                }
+            }
+        }
+    }
+
     private void SyncQuestState()
     {
-        if (dialogData.quest == null) return;
+        UpdateDialogData();
+
+        if (dialogData == null || dialogData.quest == null) 
+        {
+            currentQuestState = QuestState.Notstarted;
+            return;
+        }
         string questID = dialogData.quest.questID;
         //Future update add completing quest and handing in
         if (QuestController.instance.IsQuestComplete(questID) || QuestController.instance.IsHandin (questID))
@@ -88,15 +143,16 @@ public class NPC : MonoBehaviour,IInteractable
         {
             //skip animation and show all dialog
             StopAllCoroutines();
-            //dialogText.SetText(dialogData.dialogLines[dialogIndex]);
             DialogController.instance.SetDialogText(dialogData.dialogLines[dialogIndex]);
             isTyping = false;
+            return; // Chỉ skip animation, không chạy tiếp — chờ bấm lần nữa
         }
         //Clear choices
         DialogController.instance.ClearCHoices();
         //Check endprogressLines
         if(dialogData.EndProgressLines.Length > dialogIndex && dialogData.EndProgressLines[dialogIndex])
         {
+            Debug.Log($"[NPC] EndProgressLines[{dialogIndex}] = true → EndDialog");
             EndDialog();
             return;
         }
@@ -111,16 +167,15 @@ public class NPC : MonoBehaviour,IInteractable
             }
         }
 
-
         if (++dialogIndex < dialogData.dialogLines.Length)
         {
             //if another line, type next line
+            Debug.Log($"[NPC] Chuyển sang dòng {dialogIndex}: \"{dialogData.dialogLines[dialogIndex]}\"");
             DisplayCurrentLine();
-            //StartCoroutine(Typeline());
         }
         else
         {
-            //EndDialog
+            Debug.Log($"[NPC] Hết dòng hội thoại ({dialogIndex}) → EndDialog");
             EndDialog();
         }
     }
@@ -179,22 +234,33 @@ public class NPC : MonoBehaviour,IInteractable
     }
     public void EndDialog()
     {
-        if (currentQuestState == QuestState.Completed && !QuestController.instance.IsHandin(dialogData.quest.questID))
-        {
-            HandleQuestComplete(dialogData.quest);
-        }
         StopAllCoroutines();
         isDialogActive = false;
-        //dialogText.SetText("");
-        //npcDialogPanel.SetActive(false);
         DialogController.instance.SetDialogText("");
         DialogController.instance.ShowDialogUI(false);
         Time.timeScale = 1f;
-        //pauseController.setActive(false);
+
+        // Báo cáo TalkNpc TRƯỚC — để SyncQuestState lần sau đọc được progress đúng
+        if (npcID != 0)
+        {
+            QuestController.instance?.ReportNpcTalked(npcID);
+        }
+
+        // Kiểm tra hoàn thành quest của NPC này (null-safe)
+        if (currentQuestState == QuestState.Completed
+            && dialogData?.quest != null
+            && !QuestController.instance.IsHandin(dialogData.quest.questID))
+        {
+            HandleQuestComplete(dialogData.quest);
+        }
     }
+
     public void HandleQuestComplete(Quest quest)
     {
         RewardController.instance.GiveQuestReward(quest);
         QuestController.instance.HandInQuest(quest.questID);
+        
+        // Ngay sau khi trả nhiệm vụ, cập nhật lại xem có nhảy sang Quest tiếp theo trong chuỗi hay không
+        UpdateDialogData();
     }
 }

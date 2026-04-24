@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f710cca1d55d2bb4192ed58db5675df7, type: 3}
+  m_Name: FirstQuest
+  m_EditorClassIdentifier: 
+  npcName: Jiraiya
+  npcPortrait: {fileID: 21300000, guid: f64a2a86360332f43a8ad9e9ba4f9aa9, type: 3}
+  dialogLines:
+  - A broken pendant and no memories? I can help, but it's dangerous. Want to hear
+    it?
+  - Find my old friend at the valley's edge. He knows about the first Memory Shard.
+  - Come back when you're ready for the truth.
+  - My friend at the desert is waiting. Go!
+  autoProgressLines: 01000000
+  EndProgressLines: 00010101
+  autoProgressDisplay: 1.5
+  typingSpeed: 0.05
+  choices:
+  - dialogIndex: 0
+    choices:
+    - Yes
+    - No
+    nextDialogIndexes: 0100000002000000
+    giveQuest: 0100
+  questInprogressIndex: 3
+  questCompletedIndex: 1
+  quest: {fileID: 11400000, guid: e76b8423f786cb64290b2735e81b65d5, type: 2}

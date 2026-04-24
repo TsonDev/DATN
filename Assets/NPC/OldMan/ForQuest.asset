@@ -10,29 +10,26 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f710cca1d55d2bb4192ed58db5675df7, type: 3}
-  m_Name: NewNPCDialog
+  m_Name: ForQuest
   m_EditorClassIdentifier: 
-  npcName: Old man
+  npcName: Jiraiya
   npcPortrait: {fileID: 21300000, guid: f64a2a86360332f43a8ad9e9ba4f9aa9, type: 3}
   dialogLines:
-  - Hello new hero
-  - Can you help?
-  - Collect 5 health potion in village
-  - Ok...
-  - See you later
-  - Continue... good luck
-  - Thank you!
-  autoProgressLines: 01000000000100
-  EndProgressLines: 00000100010101
+  - The two Shards glow. A powerful enemy waits inside. Enter?
+  - The gate opens. Good luck, Tony
+  - ake your time to prepare
+  - The gate is sealed. You need 2 Memory Shards to open it!
+  autoProgressLines: 01000000
+  EndProgressLines: 00010100
   autoProgressDisplay: 1.5
   typingSpeed: 0.05
   choices:
-  - dialogIndex: 1
+  - dialogIndex: 0
     choices:
-    - Yes
-    - No
-    nextDialogIndexes: 0200000003000000
+    - Ok
+    - Not yet
+    nextDialogIndexes: 0100000002000000
     giveQuest: 0100
-  questInprogressIndex: 5
-  questCompletedIndex: 6
-  quest: {fileID: 11400000, guid: 644f3c1ce79237a4d89b7e2cbadf9bed, type: 2}
+  questInprogressIndex: 3
+  questCompletedIndex: 1
+  quest: {fileID: 11400000, guid: 3a70f1f1aa1af334e9e39912acd6efc0, type: 2}

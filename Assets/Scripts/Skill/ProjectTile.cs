@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class ProjectTile : MonoBehaviour
@@ -27,6 +28,7 @@ public class ProjectTile : MonoBehaviour
             Destroy(gameObject);
             TimeDestroy = TimeAlive;
         }
+       
     }
 
     public void LunchProTile(Vector2 direction, float force)

@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,5 +9,8 @@ public class DameType
         Trap,
         Snow,
         Projectile,
+        Heal,
+        Skill
+
     }
 }

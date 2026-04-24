@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class QuestController : MonoBehaviour
 {
@@ -35,12 +36,27 @@ public class QuestController : MonoBehaviour
         {
             foreach (QuestObjective questObjective in quest.objectives)
             {
-                if(questObjective.type != QuestObjectType.CollectItem) continue;
-                //if(!int.TryParse(questObjective.objectiveID, out int itemID)) continue;
-                int newAmount = itemCounts.TryGetValue(questObjective.objectiveID, out int count) ? Mathf.Min(count, questObjective.requiredSellect) : 0;
-                if (questObjective.currentSellect != newAmount)
+                // --- CollectItem: cập nhật progress thông thường ---
+                if (questObjective.type == QuestObjectType.CollectItem)
                 {
-                    questObjective.currentSellect = newAmount;
+                    int newAmount = itemCounts.TryGetValue(questObjective.objectiveID, out int count)
+                        ? Mathf.Min(count, questObjective.requiredSellect) : 0;
+                    if (questObjective.currentSellect != newAmount)
+                        questObjective.currentSellect = newAmount;
+                }
+
+                // --- CheckItemLoadScene: kiểm tra số lượng item, nếu đủ thì load scene ---
+                if (questObjective.type == QuestObjectType.CheckItemLoadScene)
+                {
+                    int have = itemCounts.TryGetValue(questObjective.objectiveID, out int c) ? c : 0;
+                    questObjective.currentSellect = Mathf.Min(have, questObjective.requiredSellect);
+
+                    if (questObjective.IsCompleted && !string.IsNullOrEmpty(questObjective.sceneToLoad))
+                    {
+                        Debug.Log($"[Quest] ✅ CheckItemLoadScene đủ điều kiện. Load scene: {questObjective.sceneToLoad}");
+                        SceneManager.LoadScene(questObjective.sceneToLoad);
+                        return; // dừng vòng lặp vì scene đang được load
+                    }
                 }
             }
         }
@@ -73,6 +89,71 @@ public class QuestController : MonoBehaviour
     public bool IsHandin(string questID)
     {
         return handinQuestIDs.Contains(questID);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Báo cáo progress cho các loại objective không phải CollectItem
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Gọi khi giết quái. enemyID phải khớp với objectiveID trong Quest.
+    /// </summary>
+    public void ReportEnemyKilled(int enemyID)
+    {
+        AddProgress(QuestObjectType.DefeatEnemy, enemyID, 1);
+    }
+
+    /// <summary>
+    /// Gọi khi kết thúc hội thoại với NPC. npcID phải khớp với objectiveID trong Quest.
+    /// </summary>
+    public void ReportNpcTalked(int npcID)
+    {
+        AddProgress(QuestObjectType.TalkNpc, npcID, 1);
+    }
+
+    /// <summary>
+    /// Gọi thủ công từ bất kỳ script nào (trigger zone, event, cutscene...).
+    /// objectiveID phải khớp với objectiveID được gán trong Quest ScriptableObject.
+    /// </summary>
+    public void ReportCustomProgress(int objectiveID, int amount = 1)
+    {
+        AddProgress(QuestObjectType.Custom, objectiveID, amount);
+    }
+
+    /// <summary>
+    /// Logic nội bộ: tìm tất cả active quests có objective khớp type + ID,
+    /// cộng progress và cập nhật UI.
+    /// </summary>
+    private void AddProgress(QuestObjectType type, int objectiveID, int amount)
+    {
+        bool changed = false;
+        foreach (QuestProgress quest in activeQuests)
+        {
+            foreach (QuestObjective objective in quest.objectives)
+            {
+                if (objective.type != type) continue;
+                if (objective.objectiveID != objectiveID) continue;
+                if (objective.IsCompleted) continue;
+
+                objective.currentSellect = Mathf.Min(
+                    objective.currentSellect + amount,
+                    objective.requiredSellect
+                );
+                changed = true;
+                Debug.Log($"[Quest] ✅ {type} ID={objectiveID} → {objective.currentSellect}/{objective.requiredSellect}");
+            }
+        }
+        if (changed)
+        {
+            questUI?.UpdateQuestUI();
+        }
+        else
+        {
+            // Không tìm thấy objective khớp: có thể quest chưa nhận hoặc ID bị sai
+            if (activeQuests.Count > 0)
+                Debug.LogWarning($"[Quest] ⚠️ AddProgress không tìm thấy objective type={type} ID={objectiveID}. " +
+                    $"Kiểm tra: (1) Quest đã được nhận chưa? (2) objectiveID trong Quest SO có khớp với ID trên NPC/Enemy không?");
+        }
     }
     public bool RemoveItemRequired(string questID)
     {

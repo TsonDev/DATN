@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class CharacterSelectManager : MonoBehaviour
@@ -16,75 +16,95 @@ public class CharacterSelectManager : MonoBehaviour
 	public int mainMenuSceneIndex = 0;
 
 	[Header("UI Labels")]
-	public GameObject playerLabelUI; // Hình ảnh/ chữ "PLAYER" trên Canvas
-	public GameObject enemyLabelUI;  // Hình ảnh/ chữ "ENEMY" trên Canvas
+	public GameObject playerLabelUI;   // Label hiện trên nhân vật được chọn làm P1
+	public GameObject player2LabelUI;  // Label hiện trên nhân vật được chọn làm P2
+	public GameObject enemyLabelUI;    // Label hiện trên nhân vật được chọn làm Enemy
 
-	private int currentSelectedCharacterIndex = -1; // nhân vật đang được click ảnh
-	private int selectedPlayerIndex = -1; // nhân vật được chọn làm Player
-	private int selectedEnemyIndex = -1; // nhân vật được chọn làm Enemy
+	private int currentSelectedCharacterIndex = -1;
+	private int selectedPlayerIndex  = -1;
+	private int selectedPlayer2Index = -1; // -1 = chưa chọn P2 (PvAI mode)
+	private int selectedEnemyIndex   = -1;
 
-	void Start()
-	{
-		// Ẩn label khi bắt đầu
-		playerLabelUI.SetActive(false);
-		enemyLabelUI.SetActive(false);
-	}
 
-	// 🟢 Gọi khi click vào ảnh nhân vật trong UI
+
+	// ─── Chọn nhân vật ────────────────────────────────────────────────────────
+
+	// Gọi khi click vào ảnh nhân vật trong UI (truyền index từ Inspector)
 	public void SelectCharacter(int index)
 	{
 		currentSelectedCharacterIndex = index;
 		Debug.Log("Đang chọn nhân vật số: " + index + " - " + playerPrefabs[index].name);
 	}
 
-	// 🟠 Khi ấn vào nút "Chọn làm Player"
+	//  Nút "Chọn làm Player 1"
 	public void ChooseAsPlayer()
 	{
 		if (currentSelectedCharacterIndex == -1)
 		{
-			Debug.LogWarning("⚠️ Bạn chưa chọn nhân vật nào để gán làm Player!");
+			Debug.LogWarning(" Bạn chưa chọn nhân vật nào để gán làm Player 1!");
 			return;
 		}
 
 		selectedPlayerIndex = currentSelectedCharacterIndex;
-		Debug.Log("✅ Đã chọn " + playerPrefabs[selectedPlayerIndex].name + " làm Player!");
+		Debug.Log("✅ Đã chọn " + playerPrefabs[selectedPlayerIndex].name + " làm Player 1!");
 
-		// Hiển thị label PLAYER, ẩn label ENEMY
-		playerLabelUI.SetActive(true);
-		enemyLabelUI.SetActive(false);
+		playerLabelUI?.SetActive(true);
 	}
 
-	// 🔵 Khi ấn vào nút "Chọn làm Enemy"
+	// Nút "Chọn làm Player 2" — tự động bật PvP mode
+	public void ChooseAsPlayer2()
+	{
+		if (currentSelectedCharacterIndex == -1)
+		{
+			Debug.LogWarning("⚠️ Bạn chưa chọn nhân vật nào để gán làm Player 2!");
+			return;
+		}
+
+		selectedPlayer2Index = currentSelectedCharacterIndex;
+		// Player 2 dùng cùng slot SelectedEnemyIndex để BattleManager đọc
+		selectedEnemyIndex = selectedPlayer2Index;
+
+		Debug.Log(" Đã chọn " + playerPrefabs[selectedPlayer2Index].name + " làm Player 2! (PvP mode tự động bật)");
+
+		player2LabelUI?.SetActive(true);
+	}
+
+	//  Nút "Chọn làm Enemy" — tự động bật PvAI mode
 	public void ChooseAsEnemy()
 	{
 		if (currentSelectedCharacterIndex == -1)
 		{
-			Debug.LogWarning("⚠️ Bạn chưa chọn nhân vật nào để gán làm Enemy!");
+			Debug.LogWarning(" Bạn chưa chọn nhân vật nào để gán làm Enemy!");
 			return;
 		}
 
-		selectedEnemyIndex = currentSelectedCharacterIndex;
-		Debug.Log("✅ Đã chọn " + enemyPrefabs[selectedEnemyIndex].name + " làm Enemy!");
+		selectedEnemyIndex   = currentSelectedCharacterIndex;
+		selectedPlayer2Index = -1; // reset P2 → báo PvAI
 
-		// Hiển thị label ENEMY, ẩn label PLAYER
-		playerLabelUI.SetActive(false);
-		enemyLabelUI.SetActive(true);
+		Debug.Log(" Đã chọn " + enemyPrefabs[selectedEnemyIndex].name + " làm Enemy (AI)!");
+
+		enemyLabelUI?.SetActive(true);
 	}
 
-	// 🔥 Khi nhấn nút Fight
+	// ─── Bắt đầu trận ─────────────────────────────────────────────────────────
+
 	public void StartBattle()
 	{
 		if (selectedPlayerIndex < 0 || selectedEnemyIndex < 0)
 		{
-			Debug.LogWarning("⚠️ Chưa chọn đủ player hoặc enemy!");
+			Debug.LogWarning(" Chưa chọn đủ nhân vật! Cần chọn Player 1 và (Player 2 hoặc Enemy).");
 			return;
 		}
 
-		// Lưu index sang scene đấu
+		// Xác định GameMode: nếu đã chọn P2 → PvP, ngược lại → PvAI
+		GameMode mode = (selectedPlayer2Index >= 0) ? GameMode.PvP : GameMode.PvAI;
+
 		PlayerPrefs.SetInt("SelectedPlayerIndex", selectedPlayerIndex);
-		PlayerPrefs.SetInt("SelectedEnemyIndex", selectedEnemyIndex);
+		PlayerPrefs.SetInt("SelectedEnemyIndex",  selectedEnemyIndex);
+		PlayerPrefs.SetInt("GameMode", (int)mode);
 		PlayerPrefs.Save();
 
+		Debug.Log($"[CharacterSelect] Bắt đầu: P1={selectedPlayerIndex}, Opponent={selectedEnemyIndex}, Mode={mode}");
 		SceneManager.LoadScene(battleSceneIndex);
 	}
 

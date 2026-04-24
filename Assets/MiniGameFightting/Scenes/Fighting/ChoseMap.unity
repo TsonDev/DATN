@@ -1638,8 +1638,8 @@ MonoBehaviour:
   - {fileID: 2048715796267062902, guid: f3b25d5e20b20254e95ff15f2bf1f5c6, type: 3}
   - {fileID: 4487877311179203911, guid: c8e763414caa0244ba3bf6253adc97bd, type: 3}
   - {fileID: 7487743104314774456, guid: 378649cb51dc56e46b29ebd60055151c, type: 3}
-  battleSceneIndex: 3
-  mainMenuSceneIndex: 4
+  battleSceneIndex: 4
+  mainMenuSceneIndex: 5
 --- !u!4 &1431080837
 Transform:
   m_ObjectHideFlags: 0

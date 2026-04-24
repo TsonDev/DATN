@@ -1,10 +1,7 @@
-﻿using UnityEngine;
+using UnityEngine;
 
-public class EnemyShoot : MonoBehaviour
+public class EnemyShoot : EnemyBase
 {
-    [Header("Detect")]
-    public float detectRange = 5f;
-
     [Header("Shoot")]
     public GameObject projectilePrefab;
     public Transform firePoint;
@@ -15,29 +12,19 @@ public class EnemyShoot : MonoBehaviour
     public float aoeCooldown = 2f;
     public int aoeDamage = 2;
     public GameObject aoeEffectPrefab;
-    [Header("Health")]
-    public int maxHealth = 10;
-    public int currentHealth;
 
     private float nextAOETime;
-
-    private Transform player;
-    private Animator animator;
-    private WaypointMover waypointMover;
-
     private float nextFireTime;
 
-    void Start()
+    protected override void Start()
     {
-        player = GameObject.FindGameObjectWithTag("Player")?.transform;
-        animator = GetComponent<Animator>();
-        waypointMover = GetComponent<WaypointMover>();
-        currentHealth = maxHealth;
-        
+        base.Start(); // Chạy thanh máu và các logic bắt sóng Player từ EnemyBase
     }
 
-    void Update()
+    protected override void Update()
     {
+        base.Update(); // Update thanh máu hồi phục và vị trí UI máu trên đỉnh đầu
+
         if (player == null) return;
 
         float dist = Vector2.Distance(transform.position, player.position);
@@ -80,21 +67,12 @@ public class EnemyShoot : MonoBehaviour
         }
     }
 
-    public virtual void ChangeHealth(int amount, DameType.TypeDamage type)
+    protected override void FixedUpdate()
     {
-        currentHealth = Mathf.Clamp(currentHealth + amount, 0, maxHealth);
-
-        if (currentHealth <= 0)
-        {
-            animator.SetBool("isDead", true);
-            Die();
-        }
+        // Ghi đè rỗng FixedUpdate để KHÔNG DÙNG chức năng chĩa mặt tự động áp sát của EnemyBase
+        // Bởi vì EnemyShoot chỉ loanh quanh và bắn, không lao vào người chơi (melee)
     }
 
-    protected virtual void Die()
-    {
-        Destroy(gameObject, 1f);
-    }
     void Shoot(Vector2 dir)
     {
         if (projectilePrefab == null) return;
@@ -103,26 +81,24 @@ public class EnemyShoot : MonoBehaviour
 
         GameObject bullet = Instantiate(projectilePrefab, spawnPos, Quaternion.identity);
 
-        // KHÔNG cần rigidbody cũng được
         var proj = bullet.GetComponent<EnemyProjecttile>();
         if (proj != null)
         {
             proj.LaunchProjectile(dir, 8f);
         }
 
-        // animation
         animator?.SetTrigger("Shoot");
     }
+
     void DoAOE()
     {
-        // animation
-        animator?.SetTrigger("Attack"); // trigger Attack trong Animator
+        animator?.SetTrigger("Attack"); 
         if (aoeEffectPrefab != null)
         {
             GameObject fx = Instantiate(aoeEffectPrefab, transform.position, Quaternion.identity);
-            Destroy(fx, 1f); // tự hủy sau 1s
+            Destroy(fx, 1f); 
         }
-        // gây damage trong vùng
+
         Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, aoeRange);
 
         foreach (var hit in hits)
@@ -130,10 +106,11 @@ public class EnemyShoot : MonoBehaviour
             PlayerController playerCtrl = hit.GetComponent<PlayerController>();
             if (playerCtrl != null)
             {
-                playerCtrl.ChangeHealth(-aoeDamage, DameType.TypeDamage.Snow);
+                playerCtrl.TakeHit(aoeDamage, (hit.transform.position - transform.position).normalized, DameType.TypeDamage.Snow);
             }
         }
     }
+
     void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;

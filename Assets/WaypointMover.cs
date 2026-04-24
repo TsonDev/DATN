@@ -69,7 +69,7 @@ public class WaypointMover : MonoBehaviour
                 animator.SetBool("isMoving", true);
                 animator.SetFloat("lastInputX", dir.x);
                 animator.SetFloat("lastInputY", dir.y);
-                Debug.Log("is moving");
+                
             }
 
             lastInput = dir;

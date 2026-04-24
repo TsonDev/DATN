@@ -15,9 +15,21 @@ MonoBehaviour:
   npcName: Pricess
   npcPortrait: {fileID: 21300000, guid: 1c0f6e37112849948a38e7b9a27e2b65, type: 3}
   dialogLines:
-  - "Ch\xE0o thi\u1EBFu ni\xEAn anh h\xF9ng"
-  - "t\xF4i mu\u1ED1n \u0111\u1ED3ng h\xE0nh c\xF9ng b\u1EA1n"
-  - "B\u1EA1n mu\u1ED1n \u0111i t\u1EDBi \u0111\xE2u..."
-  autoProgressLines: 010100
+  - A purple sandstorm? Crazy! Are you hurt, boy?
+  - Take a breath. You are safe in Konoha now.
+  - Tough kid. Welcome to the village.
+  - Go talk to the others. I have wood to chop
+  autoProgressLines: 01000000
+  EndProgressLines: 00010101
   autoProgressDisplay: 1.5
   typingSpeed: 0.05
+  choices:
+  - dialogIndex: 0
+    choices:
+    - Yes, a little
+    - No, I'm fine
+    nextDialogIndexes: 0100000002000000
+    giveQuest: 0000
+  questInprogressIndex: 0
+  questCompletedIndex: 0
+  quest: {fileID: 0}

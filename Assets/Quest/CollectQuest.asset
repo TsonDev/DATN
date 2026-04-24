@@ -19,12 +19,12 @@ MonoBehaviour:
   - objectiveID: 1
     description: Sellect 5 health
     currentSellect: 0
-    requiredSellect: 5
+    requiredSellect: 1
     type: 0
   - objectiveID: 2
     description: Sellect 5 potion
     currentSellect: 0
-    requiredSellect: 3
+    requiredSellect: 1
     type: 0
   questRewards:
   - type: 1

@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -13,6 +13,8 @@ public class SaveData
     public List<QuestProgress> questProgressesData;
     public List<string> HandleIDs;
     public int Gold;
+    public int CurrentAmmo;
+    public int MaxAmmo;
     public List<ShopIntanceData> shopStates = new List<ShopIntanceData>();
 
 }

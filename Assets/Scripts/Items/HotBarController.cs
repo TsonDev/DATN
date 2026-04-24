@@ -40,6 +40,8 @@ public class HotBarController : MonoBehaviour
         {
             //UseItem
             slot.CurrentItem.GetComponent<Item>().UseItem();
+            Destroy(slot.CurrentItem);
+            slot.CurrentItem = null;
         }
     }
     public List<InvetorySaveData> GetBarItems()

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
@@ -39,9 +39,23 @@ public class PlayerControllerFT : MonoBehaviour
 	[SerializeField] private float comboResetTime = 0.8f;
 
 	// --- Blocking ---
-	[Range(0f, 1f)] public float blockDamageReduction = 0.3f; // 30% sát thương khi block
+	[Range(0f, 1f)] public float blockDamageReduction = 0.3f;
 	Rigidbody2D rb;
 	Animator animator;
+
+	[Header("Player ID")]
+	[Tooltip("1 = Player 1 (WASD/J/K...), 2 = Player 2 (Arrow Keys/Numpad)")]
+	public int playerNumber = 1;
+
+	// Track block state changes for P2
+	private bool _p2WasBlocking = false;
+
+	/// <summary>Gọi từ BattleManager sau khi spawn để đồng bộ hướng mặt ban đầu với scale thực tế.</summary>
+	public void SetInitialFacingDirection(bool facingRight)
+	{
+		// Gán thẳng field — KHÔNG dùng property setter (tránh flip thêm một lần nữa)
+		_isFacingRight = facingRight;
+	}
 
 	public float CurrentMoveSpeed
 	{
@@ -160,6 +174,97 @@ public class PlayerControllerFT : MonoBehaviour
 		}
 
 		animator.SetFloat(AnimationStrings.yVelocity, rb.velocity.y);
+	}
+
+	private void Update()
+	{
+		// Player 2 đọc input trực tiếp từ bàn phím (không cần PlayerInput component)
+		if (playerNumber != 2 || !IsAlive) return;
+
+		var kb = Keyboard.current;
+		if (kb == null) return;
+
+		// Di chuyển: Arrow Left / Right
+		float h = 0f;
+		if (kb.leftArrowKey.isPressed)  h = -1f;
+		if (kb.rightArrowKey.isPressed) h =  1f;
+
+		Vector2 p2Move = new Vector2(h, 0f);
+		if (IsBlocking)
+		{
+			moveInput = Vector2.zero;
+			IsMoving = false;
+		}
+		else
+		{
+			moveInput = p2Move;
+			IsMoving = p2Move != Vector2.zero;
+			if (IsMoving) SetFacingDirection(p2Move);
+		}
+
+		// Nhảy: Numpad 8
+		if (kb.numpad8Key.wasPressedThisFrame && touchingDirections.IsGrounded && CanMove)
+		{
+			animator.SetTrigger(AnimationStrings.jump);
+			rb.velocity = new Vector2(rb.velocity.x, jumpImpulse);
+			if (AudioManager_Fight.instance != null) AudioManager_Fight.instance.PlayJump();
+		}
+
+		// Dash: Numpad 0
+		if (kb.numpad0Key.wasPressedThisFrame && canDash && !IsBlocking)
+		{
+			StartCoroutine(Dash());
+			if (AudioManager_Fight.instance != null) AudioManager_Fight.instance.PlayDash();
+		}
+
+		// Tấn công: Numpad 1
+		if (kb.numpad1Key.wasPressedThisFrame && !IsBlocking) TryAttack();
+
+		// Skill 1: Numpad 2
+		if (kb.numpad2Key.wasPressedThisFrame && !skill1OnCooldown)
+		{
+			if (manaSystem.UseMana(15))
+			{
+				animator.SetTrigger(AnimationStrings.Skill1);
+				if (AudioManager_Fight.instance != null) AudioManager_Fight.instance.PlaySkill1();
+				StartCoroutine(Skill1CooldownRoutine());
+			}
+		}
+
+		// Skill 2: Numpad 3
+		if (kb.numpad3Key.wasPressedThisFrame && !skill2OnCooldown)
+		{
+			if (manaSystem.UseMana(25))
+			{
+				animator.SetTrigger(AnimationStrings.Skill2);
+				if (AudioManager_Fight.instance != null) AudioManager_Fight.instance.PlaySkill2();
+				StartCoroutine(Skill2CooldownRoutine());
+			}
+		}
+
+		// Skill 3: Numpad 4
+		if (kb.numpad4Key.wasPressedThisFrame && !skill3OnCooldown)
+		{
+			if (manaSystem.UseMana(50))
+			{
+				animator.SetTrigger(AnimationStrings.Skill3);
+				if (AudioManager_Fight.instance != null) AudioManager_Fight.instance.PlaySkill3();
+				StartCoroutine(Skill3CooldownRoutine());
+			}
+		}
+
+		// Block: Numpad 5 (giữ = block, thả = hết block)
+		bool blockNow = kb.numpad5Key.isPressed;
+		if (blockNow && !_p2WasBlocking)
+		{
+			IsBlocking = true;
+			if (AudioManager_Fight.instance != null) AudioManager_Fight.instance.PlayHurt();
+		}
+		else if (!blockNow && _p2WasBlocking)
+		{
+			IsBlocking = false;
+		}
+		_p2WasBlocking = blockNow;
 	}
 
 
