@@ -365,6 +365,9 @@ public class EnemyBase : MonoBehaviour
             QuestController.instance?.ReportEnemyKilled(enemyID);
         }
 
+        // Đếm số kẻ địch đã tiêu diệt vào thống kê
+        GameStats.Instance?.AddKill();
+
         Destroy(gameObject, 1f);
     }
 

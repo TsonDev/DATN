@@ -19,7 +19,7 @@ MonoBehaviour:
   - objectiveID: 5
     description: 
     currentSellect: 0
-    requiredSellect: 2
-    sceneToLoad: 
+    requiredSellect: 3
+    sceneToLoad: EndScence
     type: 5
   questRewards: []

@@ -13,6 +13,12 @@ public class EnemyShoot : EnemyBase
     public int aoeDamage = 2;
     public GameObject aoeEffectPrefab;
 
+    [Header("=== Sound ===")]
+    [Tooltip("Âm thanh khi bắn đạn")]
+    public SoundData shootSound;
+    [Tooltip("Âm thanh khi tấn công AOE gần")]
+    public SoundData aoeSound;
+
     private float nextAOETime;
     private float nextFireTime;
 
@@ -88,11 +94,19 @@ public class EnemyShoot : EnemyBase
         }
 
         animator?.SetTrigger("Shoot");
+
+        // Phát âm thanh bắn
+        if (shootSound != null && SoundManager.Instance != null)
+            SoundManager.Instance.PlaySound(shootSound);
     }
 
     void DoAOE()
     {
-        animator?.SetTrigger("Attack"); 
+        animator?.SetTrigger("Attack");
+
+        // Phát âm thanh AOE
+        if (aoeSound != null && SoundManager.Instance != null)
+            SoundManager.Instance.PlaySound(aoeSound); 
         if (aoeEffectPrefab != null)
         {
             GameObject fx = Instantiate(aoeEffectPrefab, transform.position, Quaternion.identity);

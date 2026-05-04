@@ -120,10 +120,10 @@ BoxCollider2D:
   m_CallbackLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: 0.09726238, y: 0.064842224}
+  m_Offset: {x: -0.051117897, y: -0.30610955}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
@@ -134,7 +134,7 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 4.0244007, y: 4.897682}
+  m_Size: {x: 3.7276402, y: 3.5029047}
   m_EdgeRadius: 0
 --- !u!50 &7877835433573341596
 Rigidbody2D:
@@ -192,7 +192,7 @@ MonoBehaviour:
   roamRadius: 3
   roamSpeed: 1
   roamWaitTime: 2
-  healthBarPrefab: {fileID: 0}
+  healthBarPrefab: {fileID: 8572646786556027366, guid: 637c9e884b006154282170268c301a75, type: 3}
   healthBarOffset: {x: 0, y: 1.2, z: 0}
   projectilePrefab: {fileID: 3474985470495889391, guid: 9091562a4f2789849bea2be2eb039005, type: 3}
   firePoint: {fileID: 7044674197270960779}
@@ -226,7 +226,7 @@ MonoBehaviour:
   summonRadius: 2
   enrageColor: {r: 1, g: 0.3, b: 0.3, a: 1}
   colorTransitionSpeed: 2
-  dashTrailPrefab: {fileID: 4145743932240850125, guid: 2f4c33834a6d238478390a7efc8f37d0, type: 3}
+  dashTrailPrefab: {fileID: 4145743932240850125, guid: f82cc41248f0cb4448e634ff84f12690, type: 3}
   summonEffectPrefab: {fileID: 8959737308771044588, guid: ca24468047c4fe340b30bceb127b15d6, type: 3}
   shoot360EffectPrefab: {fileID: 7055741981552325213, guid: 82f286ada7088ce49a0d8fca8c9f17f1, type: 3}
 --- !u!95 &3849474084502562880

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54c43fa1607e06a4daf65159d6873208, type: 3}
   m_Name: TalkWithVillager
   m_EditorClassIdentifier: 
-  questID: b01c581d-3b6e-434d-a435-ab98b50703b5
+  questID: d82d0897-54d7-4bc4-a815-4fb7f1b4db5c
   questName: QuestTalk
   questDescription: Npc chat
   objectives:
@@ -20,16 +20,19 @@ MonoBehaviour:
     description: Talk with villager 1
     currentSellect: 0
     requiredSellect: 1
+    sceneToLoad: 
     type: 3
   - objectiveID: 11
     description: Talk with villager 2
     currentSellect: 0
     requiredSellect: 1
+    sceneToLoad: 
     type: 3
   - objectiveID: 12
     description: Talk with villager 3
     currentSellect: 0
     requiredSellect: 1
+    sceneToLoad: 
     type: 3
   questRewards:
   - type: 3

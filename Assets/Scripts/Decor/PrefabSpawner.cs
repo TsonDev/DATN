@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -22,6 +22,12 @@ public class PrefabSpawner : MonoBehaviour
     public Transform[] spawnPoints;                // nếu có thì spawn tại một trong các transform này
     public bool useArea = false;                   // nếu true dùng areaSize làm vùng spawn (center = this.transform.position)
     public Vector2 areaSize = Vector2.one;
+
+    [Header("Overlap Prevention")]
+    public bool avoidOverlap = false;              // Nếu true, sẽ tránh spawn đè lên vật khác
+    public float overlapRadius = 0.5f;             // Bán kính kiểm tra va chạm
+    public LayerMask overlapMask = -1;             // Layer để kiểm tra va chạm
+    public int maxSpawnAttempts = 10;              // Số lần thử tìm vị trí trống hợp lệ trước khi bỏ qua
 
     [Header("Limits & parenting")]
     public int maxConcurrent = 0;                  // 0 = unlimited
@@ -71,8 +77,12 @@ public class PrefabSpawner : MonoBehaviour
             return null;
         }
 
+        if (!TryChoosePosition(out Vector3 pos))
+        {
+            return null; // Không tìm được vị trí phù hợp, bỏ qua spawn lần này
+        }
+
         GameObject prefab = ChoosePrefab();
-        Vector3 pos = ChoosePosition();
         GameObject go = Instantiate(prefab, pos, Quaternion.identity);
         if (parentToSpawner) go.transform.SetParent(transform);
 
@@ -123,23 +133,57 @@ public class PrefabSpawner : MonoBehaviour
         return prefabs[UnityEngine.Random.Range(0, prefabs.Count)];
     }
 
-    private Vector3 ChoosePosition()
+    private bool TryChoosePosition(out Vector3 pos)
     {
-        if (useSpawnPoints && spawnPoints != null && spawnPoints.Length > 0)
+        pos = transform.position;
+
+        for (int i = 0; i < maxSpawnAttempts; i++)
         {
-            var t = spawnPoints[UnityEngine.Random.Range(0, spawnPoints.Length)];
-            return t.position;
+            Vector3 tempPos = transform.position;
+
+            if (useSpawnPoints && spawnPoints != null && spawnPoints.Length > 0)
+            {
+                tempPos = spawnPoints[UnityEngine.Random.Range(0, spawnPoints.Length)].position;
+            }
+            else if (useArea)
+            {
+                Vector2 half = areaSize * 0.5f;
+                float x = UnityEngine.Random.Range(-half.x, half.x);
+                float y = UnityEngine.Random.Range(-half.y, half.y);
+                tempPos = (Vector2)transform.position + new Vector2(x, y);
+            }
+
+            if (!avoidOverlap)
+            {
+                pos = tempPos;
+                return true;
+            }
+
+            // Kiểm tra va chạm (Overlap check)
+            Collider2D col = Physics2D.OverlapCircle(tempPos, overlapRadius, overlapMask);
+            if (col == null)
+            {
+                pos = tempPos;
+                return true;
+            }
         }
 
+        return false; // Đã thử maxSpawnAttempts lần nhưng không tìm được chỗ trống
+    }
+
+    private void OnDrawGizmosSelected()
+    {
         if (useArea)
         {
-            Vector2 half = areaSize * 0.5f;
-            float x = UnityEngine.Random.Range(-half.x, half.x);
-            float y = UnityEngine.Random.Range(-half.y, half.y);
-            return (Vector2)transform.position + new Vector2(x, y);
+            Gizmos.color = new Color(0, 1, 0, 0.3f);
+            Gizmos.DrawWireCube(transform.position, new Vector3(areaSize.x, areaSize.y, 0));
         }
 
-        return transform.position;
+        if (avoidOverlap)
+        {
+            Gizmos.color = new Color(1, 0, 0, 0.3f);
+            Gizmos.DrawWireSphere(transform.position, overlapRadius);
+        }
     }
 
     // Remove all spawned (optional)

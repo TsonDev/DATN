@@ -7,6 +7,7 @@ public class DropItem
     [Tooltip("Prefab của vật phẩm muốn rớt ra")]
     public GameObject itemPrefab;
     
+    
     [Tooltip("Tỉ lệ rớt ra vật phẩm này (0% đến 100%)")]
     [Range(0f, 100f)]
     public float dropChance = 50f;
@@ -17,10 +18,13 @@ public class LootDrop : MonoBehaviour
     [Header("Loot Settings")]
     [Tooltip("Danh sách các vật phẩm có thể rớt kèm tỉ lệ")]
     public List<DropItem> droppableItems;
+   
 
     [Tooltip("Có cho phép rớt nhiều vật phẩm cùng lúc không? Nếu tắt, nó chỉ bốc thăm rớt tối đa 1 món đầu tiên trúng tỉ lệ.")]
     public bool dropMultipleItems = true;
-
+    [Tooltip("Có sử dụng tỉ lệ phần trăm để rớt vật phẩm không?")]
+    public bool dropValuepercent = true;
+    public float randomValue;
     [Header("Spawn Position")]
     [Tooltip("Khoảng cách tối đa vật phẩm nảy ra xung quanh vị trí vật thể bị hủy")]
     public float scatterRange = 0.5f;
@@ -46,7 +50,8 @@ public class LootDrop : MonoBehaviour
         foreach (DropItem drop in droppableItems)
         {
             if (drop.itemPrefab == null) continue;
-            float randomValue = Random.Range(0f, 100f);
+            if(dropValuepercent)
+                randomValue = Random.Range(0f, 100f);
             if (randomValue <= drop.dropChance)
             {
                 // Tạo một vị trí nảy đồ ra bán kính xung quanh

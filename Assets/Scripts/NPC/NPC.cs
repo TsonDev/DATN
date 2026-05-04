@@ -89,28 +89,36 @@ public class NPC : MonoBehaviour,IInteractable
     }
     private void UpdateDialogData()
     {
-        if (dialogChain != null && dialogChain.Length > 0)
+        if (dialogChain == null || dialogChain.Length == 0) return;
+
+        // Duyệt theo thứ tự mảng:
+        // Bỏ qua những dialog mà quest của nó đã được hand-in (hoàn thành).
+        // Dừng lại ở dialog đầu tiên mà quest chưa hoàn thành → đây là dialog hiện tại.
+        for (int i = 0; i < dialogChain.Length; i++)
         {
-            for (int i = 0; i < dialogChain.Length; i++)
+            NPCDialog entry = dialogChain[i];
+            if (entry == null) continue;
+
+            // Nếu dialog này không có quest, hoặc quest chưa hand-in → dùng dialog này
+            bool questDone = entry.quest != null
+                             && QuestController.instance.IsHandin(entry.quest.questID);
+
+            Debug.Log($"[NPC:{gameObject.name}] Chain[{i}] = '{entry.name}' | " +
+                      $"quest = '{(entry.quest != null ? entry.quest.questID : "NULL")}' | " +
+                      $"IsHandin = {questDone}");
+
+            if (!questDone)
             {
-                dialogData = dialogChain[i];
-                
-                // Nếu NPC ở mốc này có Quest và Quest đó ĐÃ ĐƯỢC TRẢ THƯỞNG xong
-                if (dialogData.quest != null && QuestController.instance.IsHandin(dialogData.quest.questID))
-                {
-                    // Nếu không phải là đoạn hội thoại cuối cùng trong mảng, thì nhảy sang đoạn tiếp theo
-                    if (i < dialogChain.Length - 1)
-                    {
-                        continue;
-                    }
-                }
-                else
-                {
-                    // Nếu chưa trả thưởng xong (có thể là chưa nhận, hoặc đang làm), thì chốt dừng ở hội thoại này
-                    break;
-                }
+                dialogData = entry;
+                Debug.Log($"[NPC:{gameObject.name}] → Chọn Chain[{i}] '{entry.name}'");
+                return; // Tìm thấy rồi, thoát luôn
             }
+            // Nếu quest đã xong → tiếp tục vòng lặp để xét dialog tiếp theo
         }
+
+        // Tất cả quest trong chain đều đã xong → giữ dialog cuối cùng
+        dialogData = dialogChain[dialogChain.Length - 1];
+        Debug.Log($"[NPC:{gameObject.name}] → Tất cả đã xong, dùng dialog cuối: '{dialogData.name}'");
     }
 
     private void SyncQuestState()
@@ -246,12 +254,35 @@ public class NPC : MonoBehaviour,IInteractable
             QuestController.instance?.ReportNpcTalked(npcID);
         }
 
-        // Kiểm tra hoàn thành quest của NPC này (null-safe)
+        // ── Bước 1: Lấy scene cần load TRƯỚC khi hand-in quest ──────────────
+        // Lý do: HandInQuest() xóa quest khỏi activeQuests → TryLoadSceneFromQuest()
+        //        sẽ không tìm thấy quest nếu gọi sau.
+        string pendingScene = null;
+        if (currentQuestState == QuestState.Completed
+            && !string.IsNullOrEmpty(dialogData?.loadSceneQuestID))
+        {
+            pendingScene = QuestController.instance
+                              .GetCompletedSceneToLoad(dialogData.loadSceneQuestID);
+
+            if (string.IsNullOrEmpty(pendingScene))
+                Debug.Log("[NPC] loadSceneQuestID được set nhưng item chưa đủ hoặc không tìm thấy quest.");
+        }
+
+        // ── Bước 2: Hoàn thành quest (hand-in) ───────────────────────────────
         if (currentQuestState == QuestState.Completed
             && dialogData?.quest != null
             && !QuestController.instance.IsHandin(dialogData.quest.questID))
         {
             HandleQuestComplete(dialogData.quest);
+        }
+
+        // ── Bước 3: Load scene nếu có (SAU khi hand-in) ──────────────────────
+        if (!string.IsNullOrEmpty(pendingScene))
+        {
+            Debug.Log($"[NPC] ✅ Đủ điều kiện → Lưu game + Load scene: {pendingScene}");
+            GameController gc = FindObjectOfType<GameController>();
+            gc?.SaveBeforeEnd();
+            UnityEngine.SceneManagement.SceneManager.LoadScene(pendingScene);
         }
     }
 

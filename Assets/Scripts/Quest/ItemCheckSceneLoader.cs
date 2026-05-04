@@ -67,14 +67,25 @@ public class ItemCheckSceneLoader : MonoBehaviour
 
         if (have >= requiredAmount)
         {
-            // ✅ Đủ item → load scene
+            // ✅ Đủ item → Lưu game trước khi load scene
             if (showDebugLog)
-                Debug.Log($"[ItemCheckSceneLoader] ✅ Đủ điều kiện! Load scene: \"{sceneToLoad}\"");
+                Debug.Log($"[ItemCheckSceneLoader] ✅ Đủ điều kiện! Lưu game rồi load scene: \"{sceneToLoad}\"");
 
             if (string.IsNullOrEmpty(sceneToLoad))
             {
                 Debug.LogError("[ItemCheckSceneLoader] sceneToLoad chưa được điền!");
                 return;
+            }
+
+            // Tìm GameController và gọi save ngay ở đây (vẫn đang trong WorldScene)
+            GameController gc = FindObjectOfType<GameController>();
+            if (gc != null)
+            {
+                gc.SaveBeforeEnd(); // Lưu với flag gameCompleted = true
+            }
+            else
+            {
+                Debug.LogWarning("[ItemCheckSceneLoader] Không tìm thấy GameController! Game sẽ không được lưu.");
             }
 
             SceneManager.LoadScene(sceneToLoad);

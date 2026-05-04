@@ -9,9 +9,15 @@ public class WaypointMover : MonoBehaviour
     public float waitTimeAtWaypoint = 1f;
     public bool loop = true;
 
+    [Header("Auto Generate (For Spawned Enemies)")]
+    public bool autoGenerateWaypoints = false;
+    public int generateCount = 3;
+    public float generateRadius = 5f;
+
     private Transform[] waypoints;
     private int currentWaypointIndex = 0;
     private bool isWaiting;
+    private GameObject generatedParent; // Lưu lại để xóa khi enemy chết
 
     // Animation
     [Header("Animation")]
@@ -29,6 +35,22 @@ public class WaypointMover : MonoBehaviour
                 waypoints[i] = waypointParent.GetChild(i);
             }
         }
+        else if (autoGenerateWaypoints)
+        {
+            // Tự động tạo waypoints ngẫu nhiên xung quanh vị trí spawn
+            generatedParent = new GameObject(gameObject.name + "_AutoWaypoints");
+            waypoints = new Transform[generateCount];
+            
+            for (int i = 0; i < generateCount; i++)
+            {
+                GameObject wp = new GameObject("WP_" + i);
+                // Vị trí ngẫu nhiên trong vòng tròn bán kính generateRadius
+                Vector2 randomPos = (Vector2)transform.position + Random.insideUnitCircle * generateRadius;
+                wp.transform.position = randomPos;
+                wp.transform.SetParent(generatedParent.transform);
+                waypoints[i] = wp.transform;
+            }
+        }
 
         if (animator == null)
             animator = GetComponent<Animator>();
@@ -38,6 +60,15 @@ public class WaypointMover : MonoBehaviour
             animator.SetFloat("lastInputX", lastInput.x);
             animator.SetFloat("lastInputY", lastInput.y);
             animator.SetBool("isMoving", false);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        // Dọn dẹp waypoints tự tạo khi enemy bị tiêu diệt
+        if (generatedParent != null)
+        {
+            Destroy(generatedParent);
         }
     }
 

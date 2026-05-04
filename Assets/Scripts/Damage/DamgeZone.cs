@@ -15,7 +15,7 @@ public class DamgeZone : MonoBehaviour
             PlayerController playerController = collision.GetComponent<PlayerController>();
             if (playerController != null)
             {
-                playerController.ChangeHealth(-amount, DameType.TypeDamage.Trap);
+                playerController.ChangeHealth(-amount, DameType.TypeDamage.Snow);
             }
         }
     }

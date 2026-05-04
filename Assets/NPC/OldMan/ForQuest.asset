@@ -32,4 +32,5 @@ MonoBehaviour:
     giveQuest: 0100
   questInprogressIndex: 3
   questCompletedIndex: 1
-  quest: {fileID: 11400000, guid: 3a70f1f1aa1af334e9e39912acd6efc0, type: 2}
+  quest: {fileID: 11400000, guid: 6559f49e046a5f04c90d18e3855a2c1f, type: 2}
+  loadSceneQuestID: aceb28d7-84fa-49b6-97b3-4ccf1152987c

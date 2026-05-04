@@ -10,6 +10,10 @@ public class Chest : MonoBehaviour, IInteractable
     public GameObject itemPrefabs;//item drop
     public Sprite opendedSprite;
 
+    [Header("Behavior")]
+    [Tooltip("Thời gian rương biến mất sau khi mở (0 = không bao giờ biến mất)")]
+    [SerializeField] private float destroyAfterOpenedTime = 0f;
+
     // Start is called before the first frame update
     void Awake()
     {
@@ -46,6 +50,12 @@ public class Chest : MonoBehaviour, IInteractable
         {
             GameObject dropItem = Instantiate(itemPrefabs, transform.position + Vector3.down,Quaternion.identity);
             dropItem.GetComponent<BounceEffect>().StartBounce();
+        }
+
+        // Tự động huỷ sau 1 khoảng thời gian (nếu > 0)
+        if (destroyAfterOpenedTime > 0f)
+        {
+            Destroy(gameObject, destroyAfterOpenedTime);
         }
     }
     public void SetOpend(bool open)

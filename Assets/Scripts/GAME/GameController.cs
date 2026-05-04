@@ -11,6 +11,7 @@ public class GameController : MonoBehaviour
     private string saveLocation;
     private string questSaveLocation;
     private string questHandinLocation;
+    private string shopSaveLocation;         // File JSON riêng cho shop
     private InventoryController inventoryController;
     private HotBarController hotBarController;
     private Chest[] chests;
@@ -26,12 +27,13 @@ public class GameController : MonoBehaviour
     }
     private void InitializeComponent()
     {
-        //define save locayion
-        saveLocation = Path.Combine(Application.persistentDataPath, "saveData.json");
+        //define save location
+        saveLocation     = Path.Combine(Application.persistentDataPath, "saveData.json");
         questSaveLocation = Path.Combine(Application.persistentDataPath, "questProgress.json");
+        shopSaveLocation  = Path.Combine(Application.persistentDataPath, "shopData.json");
         inventoryController = FindObjectOfType<InventoryController>();
-        hotBarController = FindObjectOfType<HotBarController>();
-        chests = FindObjectsOfType<Chest>();
+        hotBarController    = FindObjectOfType<HotBarController>();
+        chests   = FindObjectsOfType<Chest>();
         shopNPCs = FindObjectsOfType<ShopNPC>();
         //thông báo lưu thành công
         StatusImage.SetActive(false);
@@ -51,16 +53,23 @@ public class GameController : MonoBehaviour
             Gold = CurrencyController.instance.GetGold(),
             CurrentAmmo = AmmoManager.Instance != null ? AmmoManager.Instance.GetCurrentAmmo() : 30,
             MaxAmmo = AmmoManager.Instance != null ? AmmoManager.Instance.GetMaxAmmo() : 99,
-            shopStates = GetShopStates(),
-            questProgressesData = null // intentionally null — quests will be saved to separate file
+            shopStates = null,            // đã chuyển sang file riêng shopData.json
+            questProgressesData = null,   // intentionally null — quests will be saved to separate file
+            gameStats = GameStats.Instance != null ? GameStats.Instance.ToSaveData() : null,
+            VolumeBGM = SoundManager.Instance != null ? SoundManager.Instance.GetVolumeBGM() : 1f,
+            VolumeSFX = SoundManager.Instance != null ? SoundManager.Instance.GetVolumeSFX() : 1f
         };
 
-        // Write main save file
+        // Ghi file save chính
         File.WriteAllText(saveLocation, JsonUtility.ToJson(saveData));
-       
+
+        // Ghi shop ra file JSON riêng
+        SaveShopsToFile();
+
+        // Ghi file save chính (cũ đã được ghi ở trên)
         Debug.Log(saveLocation);
 
-        // Write quest progress to separate file using wrapper (JsonUtility can't serialize top-level List<T>)
+        // Ghi quest progress ra file riêng
         if (QuestController.instance != null)
         {
             var wrapper = new QuestProgressSaveWrapper
@@ -80,6 +89,45 @@ public class GameController : MonoBehaviour
             StatusImage.SetActive(false);
         }
     }
+
+    /// <summary>
+    /// Gọi khi game sắp chuyển sang EndScene.
+    /// Lưu toàn bộ dữ liệu và đánh dấu gameCompleted = true.
+    /// </summary>
+    public void SaveBeforeEnd()
+    {
+        // Lưu thông thường trước
+        saveGame();
+
+        // Cập nhật thêm flag gameCompleted vào file
+        if (File.Exists(saveLocation))
+        {
+            SaveData existing = JsonUtility.FromJson<SaveData>(File.ReadAllText(saveLocation));
+            existing.gameCompleted = true;
+            File.WriteAllText(saveLocation, JsonUtility.ToJson(existing));
+            Debug.Log("[GameController] ✅ Đã lưu game + đánh dấu gameCompleted = true.");
+        }
+    }
+
+    // ─── Shop: Lưu và load riêng ra shopData.json ─────────────────────────────
+    private void SaveShopsToFile()
+    {
+        var wrapper = new ShopSaveWrapper { shops = GetShopStates() };
+        File.WriteAllText(shopSaveLocation, JsonUtility.ToJson(wrapper));
+        Debug.Log("[GameController] Shop đã lưu ra: " + shopSaveLocation);
+    }
+
+    private void LoadShopsFromFile()
+    {
+        if (!File.Exists(shopSaveLocation))
+        {
+            Debug.Log("[GameController] Chưa có file shopData.json, dùng stock mặc định.");
+            return;
+        }
+        var wrapper = JsonUtility.FromJson<ShopSaveWrapper>(File.ReadAllText(shopSaveLocation));
+        LoadShopState(wrapper?.shops);
+    }
+
     private List<ShopIntanceData> GetShopStates()
     {
         List<ShopIntanceData> shopStates = new List<ShopIntanceData>();
@@ -132,6 +180,9 @@ public class GameController : MonoBehaviour
             if (AmmoManager.Instance != null)
                 AmmoManager.Instance.ResetAmmo();
 
+            // Reset thống kê khi bắt đầu game mới
+            GameStats.Instance?.Reset();
+
             return;
         }
         if (File.Exists(saveLocation))
@@ -168,6 +219,20 @@ public class GameController : MonoBehaviour
                 // backward compatibility: if old save had quests inside main file
                 QuestController.instance.LoadQuestProgress(saveData.questProgressesData);
             }
+
+            // Load thống kê gameplay nếu có trong file save
+            if (saveData.gameStats != null)
+                GameStats.Instance?.LoadFromSave(saveData.gameStats);
+
+            // Áp dụng lại cài đặt âm lượng đã lưu
+            if (SoundManager.Instance != null)
+            {
+                SoundManager.Instance.SetMasterVolumeBGM(saveData.VolumeBGM > 0 ? saveData.VolumeBGM : 1f);
+                SoundManager.Instance.SetVolumeSFX(saveData.VolumeSFX > 0 ? saveData.VolumeSFX : 1f);
+            }
+
+            // Load shop từ file riêng
+            LoadShopsFromFile();
         }
         else
         {
@@ -196,9 +261,9 @@ public class GameController : MonoBehaviour
     }
     void LoadShopState(List<ShopIntanceData> shopStates)
     {
-        if(shopStates == null)
+        if (shopStates == null)
         {
-            Debug.LogWarning("No shop state data found in save file.");
+            Debug.LogWarning("[GameController] Không có dữ liệu shop để load.");
             return;
         }
         foreach (ShopNPC shop in shopNPCs)
@@ -206,16 +271,18 @@ public class GameController : MonoBehaviour
             ShopIntanceData shopData = shopStates.FirstOrDefault(s => s.shopID == shop.ShopID);
             if (shopData != null)
             {
-                List<ShopNPC.ShopstockItem> loadedStock = shop.GetCurrentStock();
+                // REPLACE toàn bộ (không Add để tránh nhân đôi stock mỗi lần load)
+                List<ShopNPC.ShopstockItem> loadedStock = new List<ShopNPC.ShopstockItem>();
                 foreach (ShopItemData itemData in shopData.stock)
                 {
-                   loadedStock.Add(new ShopNPC.ShopstockItem
+                    loadedStock.Add(new ShopNPC.ShopstockItem
                     {
                         itemID = itemData.itemID,
                         quantity = itemData.quantity
                     });
                 }
                 shop.SetStock(loadedStock);
+                Debug.Log($"[GameController] Load shop '{shop.ShopID}': {loadedStock.Count} loại hàng.");
             }
         }
     }
@@ -224,13 +291,10 @@ public class GameController : MonoBehaviour
         isNewGame = true;
         string path1 = Application.persistentDataPath + "/saveData.json";
         string path2 = Application.persistentDataPath + "/questProgress.json";
+        string path3 = Application.persistentDataPath + "/shopData.json";
 
-        if (File.Exists(path1))
-            File.Delete(path1);
-
-        if (File.Exists(path2))
-            File.Delete(path2);
+        if (File.Exists(path1)) File.Delete(path1);
+        if (File.Exists(path2)) File.Delete(path2);
+        if (File.Exists(path3)) File.Delete(path3);
     }
-
-
 }

@@ -138,14 +138,14 @@ public class ShopController : MonoBehaviour
     public void AddItemToShop(int itemID, int quantity)
     {
         if (currentShop == null) return;
-        currentShop.AddStock(itemID, quantity);
+        currentShop.AddStock(itemID, quantity);  // đúng thứ tự: itemID trước
         RefreshShopDisplay();
     }
     public bool RemoveItemFromShop(int itemID, int quantity)
-     {
-            if (currentShop == null) return false;
-           bool sucess =  currentShop.RemoveStock(itemID, quantity);
-           if(sucess) RefreshShopDisplay();
-           return sucess;
+    {
+        if (currentShop == null) return false;
+        bool success = currentShop.RemoveStock(itemID, quantity); // đúng thứ tự: itemID trước
+        if (success) RefreshShopDisplay();
+        return success;
     }
 }

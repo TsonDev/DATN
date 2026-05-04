@@ -262,6 +262,9 @@ MonoBehaviour:
   moveSpeed: 2
   waitTimeAtWaypoint: 1
   loop: 1
+  autoGenerateWaypoints: 1
+  generateCount: 4
+  generateRadius: 5
   animator: {fileID: 7313122888801463641}
 --- !u!114 &6604477227897000251
 MonoBehaviour:
@@ -280,10 +283,18 @@ MonoBehaviour:
   detectRange: 10
   dame: 1
   attackCooldown: 1
+  enemyID: 0
   maxHealth: 10
   currentHealth: 0
   regenDelay: 3
   regenPerSecond: 2
+  enableObstacleAvoidance: 1
+  avoidanceRadius: 0.3
+  avoidanceDistance: 0.5
+  enableAutoRoam: 1
+  roamRadius: 3
+  roamSpeed: 1
+  roamWaitTime: 2
   healthBarPrefab: {fileID: 8572646786556027366, guid: 637c9e884b006154282170268c301a75, type: 3}
   healthBarOffset: {x: 0, y: 0, z: 0}
   attackRange: 1

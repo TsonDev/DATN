@@ -14,6 +14,10 @@ public class EnemyMelee : EnemyBase
     
     [Tooltip("Vị trí tay cấm vũ khí (có thể để trống, sẽ lấy tâm của quái làm gốc)")]
     public Transform handTransform;
+
+    [Header("=== Sound ===")]
+    [Tooltip("Âm thanh khi đánh gần – tạo bằng Create > Audio > Sound")]
+    public SoundData attackSound;
     
     protected override void Update()
     {
@@ -36,6 +40,10 @@ public class EnemyMelee : EnemyBase
         {
             animator.SetTrigger("Attack");
         }
+
+        // Phát âm thanh tấn công
+        if (attackSound != null && SoundManager.Instance != null)
+            SoundManager.Instance.PlaySound(attackSound);
 
         // Hiện vũ khí giống người chơi
         if (weaponPrefab != null)

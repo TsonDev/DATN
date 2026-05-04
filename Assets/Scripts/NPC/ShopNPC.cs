@@ -62,7 +62,8 @@ public class ShopNPC : MonoBehaviour,IInteractable
     {
         currentShopStock = newStock;
     }
-    public void AddStock(int quantity, int itemID)
+    /// <summary>Thêm hàng vào kho shop theo itemID.</summary>
+    public void AddStock(int itemID, int quantity)
     {
         var existingItem = currentShopStock.Find(s => s.itemID == itemID);
         if (existingItem != null)
@@ -74,14 +75,16 @@ public class ShopNPC : MonoBehaviour,IInteractable
             currentShopStock.Add(new ShopstockItem { itemID = itemID, quantity = quantity });
         }
     }
-    public bool RemoveStock(int quantity, int itemID)
+    /// <summary>Xóa hàng khỏi kho shop theo itemID. Trả về false nếu không đủ.</summary>
+    public bool RemoveStock(int itemID, int quantity)
     {
         var existingItem = currentShopStock.Find(s => s.itemID == itemID);
-        if (existingItem != null && existingItem.quantity>= quantity)
+        if (existingItem != null && existingItem.quantity >= quantity)
         {
             existingItem.quantity -= quantity;
             return true;
         }
+        Debug.LogWarning($"[ShopNPC] Không đủ hàng để bán: itemID={itemID}, có={existingItem?.quantity ?? 0}, cần={quantity}");
         return false;
     }
 

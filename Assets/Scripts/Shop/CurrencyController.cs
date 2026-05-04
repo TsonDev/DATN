@@ -7,7 +7,7 @@ public class CurrencyController : MonoBehaviour
 {
     public static CurrencyController instance;
     [SerializeField] private int startGold = 100;
-    private int playerGold =100;
+    private int playerGold =10000;
     public event Action<int> OnGoldChanged;
 
     private void Awake()
@@ -43,6 +43,9 @@ public class CurrencyController : MonoBehaviour
     {
         playerGold += amount;
         OnGoldChanged?.Invoke(playerGold);
+
+        // Theo dõi tổng gold kiếm được trong game
+        GameStats.Instance?.AddGoldEarned(amount);
     }
     public void SetGold(int amount)
     {

@@ -45,18 +45,12 @@ public class QuestController : MonoBehaviour
                         questObjective.currentSellect = newAmount;
                 }
 
-                // --- CheckItemLoadScene: kiểm tra số lượng item, nếu đủ thì load scene ---
+                // --- CheckItemLoadScene: chỉ cập nhật progress, KHÔNG tự load scene ---
+                // Việc load scene sẽ do NPC trigger sau khi kết thúc hội thoại
                 if (questObjective.type == QuestObjectType.CheckItemLoadScene)
                 {
                     int have = itemCounts.TryGetValue(questObjective.objectiveID, out int c) ? c : 0;
                     questObjective.currentSellect = Mathf.Min(have, questObjective.requiredSellect);
-
-                    if (questObjective.IsCompleted && !string.IsNullOrEmpty(questObjective.sceneToLoad))
-                    {
-                        Debug.Log($"[Quest] ✅ CheckItemLoadScene đủ điều kiện. Load scene: {questObjective.sceneToLoad}");
-                        SceneManager.LoadScene(questObjective.sceneToLoad);
-                        return; // dừng vòng lặp vì scene đang được load
-                    }
                 }
             }
         }
@@ -67,6 +61,37 @@ public class QuestController : MonoBehaviour
         QuestProgress questProgress = activeQuests.Find(q=>q.QuestID == questID);
         return questProgress != null && questProgress.objectives.TrueForAll(o => o.IsCompleted);
     }
+
+    /// <summary>
+    /// Tìm tên scene cần load từ quest có objective CheckItemLoadScene đã hoàn thành.
+    /// Trả về null nếu quest không tồn tại, item chưa đủ, hoặc không có sceneToLoad.
+    /// KHÔNG tự load scene — việc đó do NPC.EndDialog() làm sau khi hand-in xong.
+    /// </summary>
+    public string GetCompletedSceneToLoad(string questID)
+    {
+        QuestProgress quest = activeQuests.Find(q => q.QuestID == questID);
+        if (quest == null)
+        {
+            Debug.LogWarning($"[Quest] GetCompletedSceneToLoad: không tìm thấy quest '{questID}' trong activeQuests. " +
+                             $"Kiểm tra loadSceneQuestID trong NPCDialog có đúng không.");
+            return null;
+        }
+
+        foreach (QuestObjective obj in quest.objectives)
+        {
+            if (obj.type == QuestObjectType.CheckItemLoadScene
+                && obj.IsCompleted
+                && !string.IsNullOrEmpty(obj.sceneToLoad))
+            {
+                Debug.Log($"[Quest] ✅ GetCompletedSceneToLoad: quest '{questID}' đủ item → scene '{obj.sceneToLoad}'");
+                return obj.sceneToLoad;
+            }
+        }
+
+        Debug.Log($"[Quest] GetCompletedSceneToLoad: quest '{questID}' chưa đủ item hoặc không có sceneToLoad.");
+        return null;
+    }
+
     public void HandInQuest(string questID)
     {
         Debug.Log($"HandInQuest requested for {questID}");
@@ -84,6 +109,9 @@ public class QuestController : MonoBehaviour
             activeQuests.Remove(quest);
             Debug.Log($"HandInQuest: quest {questID} removed from activeQuests.");
             questUI?.UpdateQuestUI();
+
+            // Đếm số quest hoàn thành vào thống kê
+            GameStats.Instance?.AddQuestCompleted();
         }
     }
     public bool IsHandin(string questID)

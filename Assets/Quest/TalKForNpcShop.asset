@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54c43fa1607e06a4daf65159d6873208, type: 3}
   m_Name: TalKForNpcShop
   m_EditorClassIdentifier: 
-  questID: b01c581d-3b6e-434d-a435-ab98b50703b5
+  questID: e2b4d956-76d4-48dd-8400-cb846fc16601
   questName: QuestTalk
   questDescription: Npc chat
   objectives:
@@ -21,7 +21,7 @@ MonoBehaviour:
     currentSellect: 0
     requiredSellect: 1
     sceneToLoad: 
-    type: 4
+    type: 3
   questRewards:
   - type: 3
     rewardID: 3

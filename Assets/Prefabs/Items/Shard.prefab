@@ -123,7 +123,7 @@ MonoBehaviour:
   quantity: 1
   maxStack: 3
   quantityText: {fileID: 8407016619098517223}
-  buyPrice: 10000
+  buyPrice: 10
   sellPriceMultiplier: 0
 --- !u!212 &-807997541085633246
 SpriteRenderer:

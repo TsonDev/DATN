@@ -16,6 +16,10 @@ public class SaveData
     public int CurrentAmmo;
     public int MaxAmmo;
     public List<ShopIntanceData> shopStates = new List<ShopIntanceData>();
+    public bool gameCompleted; // true khi người chơi đã xem credits / hoàn thành game
+    public GameStatsSaveData gameStats; // Thống kê gameplay (kill, quest, gold, time)
+    public float VolumeBGM = 1f;  // Âm lượng nhạc nền (0–1)
+    public float VolumeSFX = 1f;  // Âm lượng hiệu ứng âm thanh (0–1)
 
 }
 [System.Serializable]
@@ -41,4 +45,11 @@ public class ShopItemData
 public class QuestProgressSaveWrapper
 {
     public List<QuestProgress> questProgresses;
+}
+
+// Wrapper để lưu toàn bộ dữ liệu shop ra file shopData.json riêng
+[System.Serializable]
+public class ShopSaveWrapper
+{
+    public List<ShopIntanceData> shops;
 }

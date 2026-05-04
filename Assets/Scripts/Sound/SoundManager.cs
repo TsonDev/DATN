@@ -9,6 +9,9 @@ public class SoundManager : MonoBehaviour
     public AudioSource sfxSource;
     public AudioSource bgmSource;
 
+    // Âm lượng BGM do người dùng đặt trong Setting (lưu vào save file)
+    private float userBGMVolume = 1f;
+
     void Awake()
     {
         if (Instance == null)
@@ -41,19 +44,28 @@ public class SoundManager : MonoBehaviour
         bgmSource.Stop();
     }
 
-    public void SetVolumeBGM(float value)
+    /// <summary>
+    /// Gọi từ SerfaceArea: đặt âm lượng theo khu vực, nhân với userBGMVolume để tôn trọng setting người dùng.
+    /// </summary>
+    public void SetVolumeBGM(float areaVolume)
     {
-        bgmSource.volume = value;
+        bgmSource.volume = Mathf.Clamp01(userBGMVolume * areaVolume);
     }
+
     public void SetVolumeSFX(float value)
     {
         sfxSource.volume = value;  // fix: phải là sfxSource
     }
 
-    // --- Dành cho SettingUI gọi ---
-    /// <summary>Điều chỉnh âm lượng nhạc nền (BGM). Gọi từ SettingUI.</summary>
+    /// <summary>Trả về âm lượng BGM do người dùng đặt (không phải âm lượng area).</summary>
+    public float GetVolumeBGM() => userBGMVolume;
+    public float GetVolumeSFX() => sfxSource != null ? sfxSource.volume : 1f;
+
+    // --- Dành cho SettingUI / GameController gọi ---
+    /// <summary>Lưu âm lượng BGM do người dùng đặt và áp dụng ngay lập tức.</summary>
     public void SetMasterVolumeBGM(float value)
     {
+        userBGMVolume = Mathf.Clamp01(value);
         bgmSource.volume = Mathf.Clamp01(value);
     }
 

@@ -34,6 +34,12 @@ public class EnemyExploder : MonoBehaviour
     public float minFlashSpeed = 0.03f;
     public float maxFlashSpeed = 0.15f;
 
+    [Header("=== Sound ===")]
+    [Tooltip("Âm thanh khi bắt đầu phát sáng (chuẩn bị nổ)")]
+    public SoundData fuseSound;
+    [Tooltip("Âm thanh nổ")]
+    public SoundData explodeSound;
+
     private Transform player;
     private Animator animator;
     private Rigidbody2D rb;
@@ -214,6 +220,10 @@ public class EnemyExploder : MonoBehaviour
         // animation
         animator?.SetTrigger("Attack");
 
+        // Âm thanh mồi lửa (bắt đầu chuẩn bị nổ)
+        if (fuseSound != null && SoundManager.Instance != null)
+            SoundManager.Instance.PlaySound(fuseSound);
+
         // nhấp nháy đỏ
         StartCoroutine(FlashRed());
 
@@ -225,6 +235,10 @@ public class EnemyExploder : MonoBehaviour
             GameObject fx = Instantiate(explosionPrefab, transform.position, Quaternion.identity);
             Destroy(fx, 1f);
         }
+
+        // Âm thanh nổ
+        if (explodeSound != null && SoundManager.Instance != null)
+            SoundManager.Instance.PlaySound(explodeSound);
 
         // gây damage
         Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, explodeRange);
